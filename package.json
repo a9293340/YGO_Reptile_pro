@@ -1,0 +1,26 @@
+{
+	"name": "ygo-reptile",
+	"version": "1.0.0",
+	"description": "ygo reptile",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"dev": "node index.js"
+	},
+	"keywords": [
+		"ygo"
+	],
+	"type": "module",
+	"author": "eric",
+	"license": "ISC",
+	"dependencies": {
+		"chalk": "^5.2.0",
+		"cheerio": "^1.0.0-rc.12",
+		"iconv": "^3.0.1",
+		"iconv-lite": "^0.6.3",
+		"jquery": "^3.6.3",
+		"readline-sync": "^1.4.10",
+		"request": "^2.88.2",
+		"request-promise": "^4.2.6"
+	}
+}
