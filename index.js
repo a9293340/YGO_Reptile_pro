@@ -7,7 +7,7 @@ const checkCardNumber = file =>
 	.map((el) => el.split('.')[0].padStart(8, '0')).filter((el) => file.existed.findIndex((x) => x === el) === -1);
 
 const updatedJson = (newData, file) => {
-	if (!newData.length) return;
+	// if (!newData.length) return;
 	file.existed = [...file.existed, ...newData];
 	file.lastAdd = newData;
 	fs.writeFileSync('./database/card_number.json', JSON.stringify(file));
@@ -21,7 +21,8 @@ async function main() {
 	// 把新增的卡號紀錄在JSON中
 	updatedJson(newData, file);
 	// 爬蟲
-	await reptile(file);
+	let getData = await reptile(file);
+	console.log(getData)
 }
 
 main();
