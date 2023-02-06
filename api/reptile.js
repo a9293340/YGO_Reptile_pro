@@ -3,7 +3,8 @@ import iconv from 'iconv-lite';
 import chalk from 'chalk';
 import fs from 'fs';
 import { useBig5_encode, useDelay } from './tools/index.js';
-import stringify from 'qs-stringify';
+import gradient from 'gradient-string';
+import { createSpinner } from 'nanospinner';
 import {
   useReptile2Split,
   useReptileByForm,
@@ -34,7 +35,7 @@ const cardInfoObj = {
 };
 
 export const reptile = async file => {
-  console.log(chalk.whiteBright.blueBright.bold('Start Reptile Cards Information'), ' ');
+  console.log(gradient.rainbow('Start Reptile Cards Information'));
   let final = [];
   //! function
   const jud_correct_info = text =>
@@ -97,6 +98,9 @@ export const reptile = async file => {
     let card_product_information_type_arr = [];
     let card_rarity_arr = [];
     cardInfo.number = file.lastAdd[set];
+    const spinner = createSpinner(
+      `Get Card Number : ${chalk.whiteBright.bgMagenta(cardInfo.number)} Information`,
+    ).start();
     try {
       await useReptileByForm('http://220.134.173.17/gameking/card/ocg_list.asp', {
         form_data13: `${cardInfo.number}`,
@@ -108,11 +112,18 @@ export const reptile = async file => {
           $('tr[bgcolor="#E8F4FF"] td[width="22%"][align="center"]'),
         )[0];
         if (cardInfo.name === undefined) {
-          console.log(
-            chalk.white.bgRed(`${cardInfo.number} is not existed!`),
-            `Current progress [${set + 1}/${file.lastAdd.length}]`,
-            chalk.blue(` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `),
-          );
+          spinner.error({
+            text: `${chalk.white.bgRed(`${cardInfo.number} is not existed!`)} Current progress [${
+              set + 1
+            }/${file.lastAdd.length}] ${chalk.blue(
+              ` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `,
+            )})}`,
+          });
+          // console.log(
+          //   chalk.white.bgRed(`${cardInfo.number} is not existed!`),
+          //   `Current progress [${set + 1}/${file.lastAdd.length}]`,
+          //   chalk.blue(` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `),
+          // );
           return;
         }
 
@@ -168,15 +179,28 @@ export const reptile = async file => {
             card_rarity_arr,
           ),
         ];
-        console.log(
-          `Get Card`,
-          chalk.whiteBright.bgMagenta(` ${cardInfo.number} - ${cardInfo.name}`),
-          ` Success! Current progress [${set + 1}/${file.lastAdd.length}]`,
-          chalk.blue(` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `),
-        );
+        spinner.success({
+          text: `Get Card ${chalk.whiteBright.bgMagenta(
+            ` ${cardInfo.number} - ${cardInfo.name}`,
+          )} Success! Current progress [${set + 1}/${file.lastAdd.length}] ${chalk.blue(
+            ` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `,
+          )}`,
+        });
+        // console.log(
+        //   `Get Card`,
+        //   chalk.whiteBright.bgMagenta(` ${cardInfo.number} - ${cardInfo.name}`),
+        //   ` Success! Current progress [${set + 1}/${file.lastAdd.length}]`,
+        //   chalk.blue(` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `),
+        // );
       });
     } catch (error) {
-      console.log(`Get Card`, chalk.bgRed(` ${cardInfo.number}`), ` no this card id!`);
+      spinner.error({
+        text: `${chalk.white.bgRed(`${cardInfo.number} is not existed!`)} Current progress [${
+          set + 1
+        }/${file.lastAdd.length}] ${chalk.blue(
+          ` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `,
+        )})}`,
+      });
       errorBox.push(cardInfo.number);
     }
     await useDelay(Math.random() * 100);
@@ -191,7 +215,7 @@ export const reptile = async file => {
 };
 
 export const reptileOptions = async () => {
-  console.log(chalk.whiteBright.blueBright.bold('Start Reptile Options'), ' ');
+  console.log(gradient.rainbow('Start Reptile Options'));
   let final = {};
   const res = await useReptileTargetUrl('http://220.134.173.17/gameking/card/ocg_index.asp');
   const body = iconv.decode(Buffer.from(res), 'Big5');

@@ -3,6 +3,7 @@ import fs from 'fs';
 import { reptile, reptileOptions } from './api/reptile.js';
 import inquirer from 'inquirer';
 import { useErrorMsg } from './api/tools/index.js';
+import figlet from 'figlet';
 
 const checkCardNumber = file =>
   fs
@@ -17,11 +18,8 @@ const updatedJson = (newData, file) => {
   fs.writeFileSync('./database/card_number.json', JSON.stringify(file));
 };
 
-const checkDataFromYgoProPic = () => {
-  const file = JSON.parse(fs.readFileSync('./database/card_number.json'));
-  // 判斷卡號是否完整，否則更新
-  return checkCardNumber(file);
-};
+// './database/card_number.json'
+const checkDataFromYgoProPic = path => checkCardNumber(JSON.parse(fs.readFileSync(path)));
 const checkDataFromJson = path => JSON.parse(fs.readFileSync(path));
 
 const getOptions = async (cb = async () => {}) => {
@@ -41,22 +39,27 @@ const getOptions = async (cb = async () => {}) => {
 
 const getCardInfo = async () => {
   let newData = [];
-  const questions_2 = [
+  const answers = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'useToGetNewData',
+      message: 'Which of the following methods do you want to use to update the information?',
+      choices: [
+        { name: 'From YcoPro Pic (put pictures in "pic" file)', value: '1' },
+        { name: 'From JSON (json must be array !)', value: '2' },
+      ],
+    },
     {
       type: 'input',
-      name: 'useToGetNewData',
-      message: `Which of the following methods do you want to use to update the information? 
- (1 From YcoPro Pic (put pictures in "pic" file) => input 1
- (2 From JSON (json must be array !) => input your json file path
-`,
+      name: 'useToGetNewPath',
+      message: 'Input path information.(Pic => file path , JSON => json path)',
     },
-  ];
-  const answers = await inquirer.prompt(questions_2);
+  ]);
   try {
     newData =
       answers.useToGetNewData === '1'
-        ? checkDataFromYgoProPic()
-        : checkDataFromJson(answers.updateOption);
+        ? checkDataFromYgoProPic(answers.useToGetNewPath)
+        : checkDataFromJson(answers.useToGetNewPath);
   } catch (e) {
     useErrorMsg('Path /Picture file Error ! Please check data and retry !');
     return;
@@ -81,20 +84,27 @@ const getCardInfo = async () => {
 };
 
 async function main() {
-  console.log(chalk.whiteBright.blueBright.bold('Welcome to use YGO reptile ~'), ' ');
-  const questions_1 = [
-    {
-      type: 'input',
-      name: 'updateOption',
-      message: `Please select an update item. 
- (1 Options
- (2 Card Information 
- (3 All
-`,
-    },
-  ];
+  console.log(
+    figlet.textSync('YGO Reptile!', {
+      font: 'Ghost',
+      horizontalLayout: 'fill',
+      verticalLayout: 'default',
+      width: 80,
+      whitespaceBreak: true,
+    }),
+  );
 
-  const answers = await inquirer.prompt(questions_1);
+  const answers = await inquirer.prompt({
+    type: 'list',
+    name: 'updateOption',
+    message: 'Please select an update process.',
+    choices: [
+      { name: 'Options', value: '1' },
+      { name: 'Card Information', value: '2' },
+      { name: 'All', value: '3' },
+    ],
+  });
+
   switch (answers.updateOption) {
     case '1':
       await getOptions();
@@ -103,10 +113,6 @@ async function main() {
       await getCardInfo();
       break;
     case '3':
-      await getOptions(getCardInfo);
-      break;
-    default:
-      useErrorMsg('Input Error ! Use (3');
       await getOptions(getCardInfo);
       break;
   }
