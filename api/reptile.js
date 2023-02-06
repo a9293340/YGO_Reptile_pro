@@ -34,7 +34,7 @@ const cardInfoObj = {
   ],
 };
 
-export const reptile = async file => {
+export const reptileCardInfo = async (file, imgFilePath) => {
   console.log(gradient.rainbow('Start Reptile Cards Information'));
   let final = [];
   //! function
@@ -68,6 +68,10 @@ export const reptile = async file => {
       const card_id = card_id_arr[i];
       const card_product_information_type = card_product_information_type_arr[i];
       const card_rarity = card_rarity_arr[i];
+
+      //TODO: image push to data.
+      const imgPath = `${imgFilePath}\\${cardInfo.number}`;
+
       if (
         arr.find(
           el =>
@@ -97,7 +101,7 @@ export const reptile = async file => {
         `${cardInfo.number} is not existed!`,
       )} Current progress [${set + 1}/${file.lastAdd.length}] ${chalk.blue(
         ` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `,
-      )})}`,
+      )}`,
     });
 
   //
@@ -195,10 +199,9 @@ export const reptile = async file => {
 
   if (errorBox.length > file.errorList.length) {
     file.errorList = errorBox;
-    fs.writeFileSync('./database/card_number.json', JSON.stringify(file));
   }
 
-  return final;
+  return { final, file };
 };
 
 export const reptileOptions = async () => {

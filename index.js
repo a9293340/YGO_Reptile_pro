@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import fs from 'fs';
-import { reptile, reptileOptions } from './api/reptile.js';
+import { reptileCardInfo, reptileOptions } from './api/reptile.js';
 import inquirer from 'inquirer';
 import { useErrorMsg } from './api/tools/index.js';
 import figlet from 'figlet';
@@ -15,29 +15,28 @@ const updatedJson = (newData, file) => {
   // if (!newData.length) return;
   file.existed = [...file.existed, ...newData];
   file.lastAdd = newData;
-  fs.writeFileSync('./database/card_number.json', JSON.stringify(file));
+  return file;
 };
 
 // './database/card_number.json'
 const checkDataFromYgoProPic = path => checkCardNumber(JSON.parse(fs.readFileSync(path)));
 const checkDataFromJson = path => JSON.parse(fs.readFileSync(path));
 
-const getOptions = async (cb = async () => {}) => {
+const getOptions = async (updateOption, cb = async () => {}) => {
+  console.log(gradient.rainbow('========  Reptile YGO Options Information ========'));
   let newData = await reptileOptions();
   fs.writeFileSync('./database/options.json', JSON.stringify(newData.options));
   fs.writeFileSync(
     './database/productInformation.json',
     JSON.stringify(newData.productInformation),
   );
-  console.log(
-    chalk.white.bgGreen.bold('Updated Options Successful !'),
-    `,total updated option data`,
-  );
+  console.log(chalk.white.bgGreen.bold('Updated Options Successful !'));
   //* 結束後執行callback function
-  await cb();
+  if (updateOption === '3') await cb();
 };
 
 const getCardInfo = async () => {
+  console.log(gradient.rainbow('========  Reptile YGO Cards Information ========'));
   let newData = [];
   const answers = await inquirer.prompt([
     {
@@ -55,6 +54,7 @@ const getCardInfo = async () => {
       message: 'Input path information.(Pic => file path , JSON => json path)',
     },
   ]);
+
   try {
     newData =
       answers.useToGetNewData === '1'
@@ -71,15 +71,18 @@ const getCardInfo = async () => {
 
   let file = JSON.parse(fs.readFileSync('./database/card_number.json'));
   //* 把新增的卡號紀錄在JSON中
-  updatedJson(newData, file);
-  //*s 爬蟲
-  let getData = await reptile(file);
-  let allData = fs.readFileSync('./database/cardInfo.json');
-  allData = [...allData, ...getData];
+  file = updatedJson(newData, file);
+  //* 爬蟲
+  const getData = await reptileCardInfo(file);
+
+  const allData = [...fs.readFileSync('./database/cardInfo.json'), ...getData.final];
+
+  fs.writeFileSync('./database/card_number.json', JSON.stringify(getData.file));
   fs.writeFileSync('./database/cardInfo.json', JSON.stringify(allData));
+
   console.log(
     chalk.white.bgGreen.bold('Updated Data Successful !'),
-    `,total updated ${getData.length} data`,
+    `,total updated ${getData.final.length} data`,
   );
 };
 
@@ -89,7 +92,7 @@ async function main() {
       font: 'Ghost',
       horizontalLayout: 'fill',
       verticalLayout: 'default',
-      width: 80,
+      width: 140,
       whitespaceBreak: true,
     }),
   );
@@ -105,17 +108,9 @@ async function main() {
     ],
   });
 
-  switch (answers.updateOption) {
-    case '1':
-      await getOptions();
-      break;
-    case '2':
-      await getCardInfo();
-      break;
-    case '3':
-      await getOptions(getCardInfo);
-      break;
-  }
+  answers.updateOption === '2'
+    ? await getCardInfo()
+    : await getOptions(answers.updateOption, getCardInfo);
 }
 
 main();
