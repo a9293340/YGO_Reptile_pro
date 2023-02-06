@@ -72,8 +72,19 @@ const getCardInfo = async () => {
   let file = JSON.parse(fs.readFileSync('./database/card_number.json'));
   //* 把新增的卡號紀錄在JSON中
   file = updatedJson(newData, file);
+
+  // Image File Control
+  const imgFilePath =
+    answers.useToGetNewData === '1'
+      ? answers.useToGetNewPath
+      : await inquirer.prompt({
+          type: 'input',
+          name: 'imagePath',
+          message: 'Input update image file path.',
+        });
+
   //* 爬蟲
-  const getData = await reptileCardInfo(file);
+  const getData = await reptileCardInfo(file, imgFilePath);
 
   const allData = [...fs.readFileSync('./database/cardInfo.json'), ...getData.final];
 
