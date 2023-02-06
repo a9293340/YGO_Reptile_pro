@@ -90,6 +90,16 @@ export const reptile = async file => {
 
     return arr;
   };
+
+  const errorControl = (spinner, cardInfo, set, file) =>
+    spinner.error({
+      text: `Card Number : ${chalk.white.bgRed(
+        `${cardInfo.number} is not existed!`,
+      )} Current progress [${set + 1}/${file.lastAdd.length}] ${chalk.blue(
+        ` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `,
+      )})}`,
+    });
+
   //
   let errorBox = file.errorList;
   for (let set = 0; set < file.lastAdd.length; set++) {
@@ -112,18 +122,7 @@ export const reptile = async file => {
           $('tr[bgcolor="#E8F4FF"] td[width="22%"][align="center"]'),
         )[0];
         if (cardInfo.name === undefined) {
-          spinner.error({
-            text: `${chalk.white.bgRed(`${cardInfo.number} is not existed!`)} Current progress [${
-              set + 1
-            }/${file.lastAdd.length}] ${chalk.blue(
-              ` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `,
-            )})}`,
-          });
-          // console.log(
-          //   chalk.white.bgRed(`${cardInfo.number} is not existed!`),
-          //   `Current progress [${set + 1}/${file.lastAdd.length}]`,
-          //   chalk.blue(` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `),
-          // );
+          errorControl(spinner, cardInfo, set, file);
           return;
         }
 
@@ -180,27 +179,15 @@ export const reptile = async file => {
           ),
         ];
         spinner.success({
-          text: `Get Card ${chalk.whiteBright.bgMagenta(
+          text: `Get Card ${chalk.whiteBright.bgGreen(
             ` ${cardInfo.number} - ${cardInfo.name}`,
           )} Success! Current progress [${set + 1}/${file.lastAdd.length}] ${chalk.blue(
             ` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `,
           )}`,
         });
-        // console.log(
-        //   `Get Card`,
-        //   chalk.whiteBright.bgMagenta(` ${cardInfo.number} - ${cardInfo.name}`),
-        //   ` Success! Current progress [${set + 1}/${file.lastAdd.length}]`,
-        //   chalk.blue(` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `),
-        // );
       });
     } catch (error) {
-      spinner.error({
-        text: `${chalk.white.bgRed(`${cardInfo.number} is not existed!`)} Current progress [${
-          set + 1
-        }/${file.lastAdd.length}] ${chalk.blue(
-          ` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `,
-        )})}`,
-      });
+      errorControl(spinner, cardInfo, set, file);
       errorBox.push(cardInfo.number);
     }
     await useDelay(Math.random() * 100);
@@ -208,7 +195,7 @@ export const reptile = async file => {
 
   if (errorBox.length > file.errorList.length) {
     file.errorList = errorBox;
-    fs.writeFileSync('./database/options.json', JSON.stringify(file));
+    fs.writeFileSync('./database/card_number.json', JSON.stringify(file));
   }
 
   return final;
