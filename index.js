@@ -4,6 +4,7 @@ import { reptileCardInfo, reptileOptions } from './api/reptile.js';
 import inquirer from 'inquirer';
 import { useErrorMsg } from './api/tools/index.js';
 import figlet from 'figlet';
+import gradient from 'gradient-string';
 
 const checkCardNumber = file =>
   fs
@@ -51,7 +52,7 @@ const getCardInfo = async () => {
     {
       type: 'input',
       name: 'useToGetNewPath',
-      message: 'Input path information.(Pic => file path , JSON => json path)',
+      message: 'Input path information.(Pic => card_number.json path , JSON => json path)',
     },
   ]);
 
@@ -74,17 +75,14 @@ const getCardInfo = async () => {
   file = updatedJson(newData, file);
 
   // Image File Control
-  const imgFilePath =
-    answers.useToGetNewData === '1'
-      ? answers.useToGetNewPath
-      : await inquirer.prompt({
-          type: 'input',
-          name: 'imagePath',
-          message: 'Input update image file path.',
-        });
+  const imgFilePath = await inquirer.prompt({
+    type: 'input',
+    name: 'path',
+    message: 'Input update image file path.',
+  });
 
   //* 爬蟲
-  const getData = await reptileCardInfo(file, imgFilePath);
+  const getData = await reptileCardInfo(file, imgFilePath.path);
 
   const allData = [...fs.readFileSync('./database/cardInfo.json'), ...getData.final];
 

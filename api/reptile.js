@@ -69,9 +69,6 @@ export const reptileCardInfo = async (file, imgFilePath) => {
       const card_product_information_type = card_product_information_type_arr[i];
       const card_rarity = card_rarity_arr[i];
 
-      //TODO: image push to data.
-      const imgPath = `${imgFilePath}\\${cardInfo.number}`;
-
       if (
         arr.find(
           el =>
@@ -113,7 +110,7 @@ export const reptileCardInfo = async (file, imgFilePath) => {
     let card_rarity_arr = [];
     cardInfo.number = file.lastAdd[set];
     const spinner = createSpinner(
-      `Get Card Number : ${chalk.whiteBright.bgMagenta(cardInfo.number)} Information`,
+      `Get Card Number : ${chalk.whiteBright.bgMagenta(cardInfo.number)}  Information`,
     ).start();
     try {
       await useReptileByForm('http://220.134.173.17/gameking/card/ocg_list.asp', {
@@ -172,6 +169,23 @@ export const reptileCardInfo = async (file, imgFilePath) => {
           i % 2 === 1 ? (cardInfo.def = info) : (cardInfo.atk = info);
         }
 
+        //! 取得圖片(base64)
+        if (
+          fs
+            .readdirSync(imgFilePath)
+            .find(el => el.indexOf(cardInfo.number.replace(/\b(0+)/g, '')) !== -1)
+        ) {
+          const imgPath = `${imgFilePath}\\${cardInfo.number.replace(/\b(0+)/g, '')}.jpg`;
+          cardInfo.photo = `data:image/jpg;base64,${fs.readFileSync(imgPath, {
+            encoding: 'base64',
+          })}`;
+        } else
+          spinner.update({
+            text: chalk.bgRedBright.white(
+              `Card Number : ${cardInfo.number} not find picture information !`,
+            ),
+          });
+
         //
         final = [
           ...final,
@@ -191,7 +205,8 @@ export const reptileCardInfo = async (file, imgFilePath) => {
         });
       });
     } catch (error) {
-      errorControl(spinner, cardInfo, set, file);
+      // errorControl(spinner, cardInfo, set, file);
+      console.log(error);
       errorBox.push(cardInfo.number);
     }
     await useDelay(Math.random() * 100);
