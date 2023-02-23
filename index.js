@@ -5,6 +5,7 @@ import inquirer from 'inquirer';
 import { useErrorMsg } from './api/tools/index.js';
 import figlet from 'figlet';
 import gradient from 'gradient-string';
+import { reptilePrice } from './api/reptilePrice.js';
 
 const checkCardNumber = file =>
   fs
@@ -84,7 +85,10 @@ const getCardInfo = async () => {
   //* 爬蟲
   const getData = await reptileCardInfo(file, imgFilePath.path);
 
-  const allData = [...fs.readFileSync('./database/cardInfo.json'), ...getData.final];
+  const allData = [
+    ...JSON.parse(fs.readFileSync('./database/cardInfo.json').toString()),
+    ...getData.final,
+  ];
 
   fs.writeFileSync('./database/card_number.json', JSON.stringify(getData.file));
   fs.writeFileSync('./database/cardInfo.json', JSON.stringify(allData));
@@ -93,6 +97,29 @@ const getCardInfo = async () => {
     chalk.white.bgGreen.bold('Updated Data Successful !'),
     `,total updated ${getData.final.length} data`,
   );
+};
+
+const getRutenInfo = async () => {
+  console.log(gradient.rainbow('========  Reptile YGO Cards Price ========'));
+
+  const answers = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'useToGetNewPath',
+      message: 'Which card you want to search?',
+    },
+    {
+      type: 'list',
+      name: 'useToGetNewData',
+      message: 'Please select an item to search by.',
+      choices: [
+        { name: 'Average (Average of up to 50 items)', value: '1' },
+        { name: 'Cheapest average', value: '2' },
+      ],
+    },
+  ]);
+  let target = answers.useToGetNewPath.replace(' ', '+') + '&sort=prc%2Fac';
+  let price = await reptilePrice(target, answers.useToGetNewData);
 };
 
 async function main() {
@@ -114,8 +141,12 @@ async function main() {
       { name: 'Options', value: '1' },
       { name: 'Card Information', value: '2' },
       { name: 'All', value: '3' },
+      { name: 'Ruten Reptile', value: '4' },
     ],
   });
+
+  //! go to ruten reptile
+  if (answers.updateOption === '4') getRutenInfo();
 
   answers.updateOption === '2'
     ? await getCardInfo()

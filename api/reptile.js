@@ -25,14 +25,111 @@ const cardInfoObj = {
   product_information_type_id: 0,
   id: '',
   effect: '',
-  photo: '',
-  price_info: [
-    {
-      time: '',
-      price: 0,
-    },
-  ],
+  price_info: [],
 };
+const transferRarityArr = [
+  {
+    from: '紅鑽',
+    to: '紅字半鑽',
+  },
+  {
+    from: '凸版',
+    to: '浮雕',
+  },
+  {
+    from: '20th紅全鑽',
+    to: '紅鑽',
+  },
+  {
+    from: '25th鑽',
+    to: '金鑽',
+  },
+  {
+    from: '金亮KC紋',
+    to: 'KC紋',
+  },
+  {
+    from: '普卡字紋鑽',
+    to: '古文鑽',
+  },
+  {
+    from: '銀字字紋鑽',
+    to: '古文鑽',
+  },
+  {
+    from: '亮面字紋鑽',
+    to: '古文鑽',
+  },
+  {
+    from: '金亮字紋鑽',
+    to: '古文鑽',
+  },
+  {
+    from: '黃金字紋鑽',
+    to: '古文鑽',
+  },
+  {
+    from: '半鑽字紋鑽',
+    to: '古文鑽',
+  },
+  {
+    from: '普卡放射鑽',
+    to: '古文鑽',
+  },
+  {
+    from: '普卡粉鑽',
+    to: '普鑽',
+  },
+  {
+    from: '亮面粉鑽',
+    to: '粉鑽',
+  },
+  {
+    from: '金亮粉鑽',
+    to: '粉鑽',
+  },
+  {
+    from: '普卡彩鑽',
+    to: '普鑽',
+  },
+  {
+    from: '斜鑽彩鑽',
+    to: '斜鑽',
+  },
+  {
+    from: '雷射彩鑽',
+    to: '雷射',
+  },
+  {
+    from: '普卡點鑽',
+    to: '點鑽',
+  },
+  {
+    from: '隱普點鑽',
+    to: '點鑽',
+  },
+  {
+    from: '普卡碎鑽',
+    to: '碎鑽',
+  },
+  {
+    from: '隱普碎鑽',
+    to: '碎鑽',
+  },
+  {
+    from: '普卡方鑽',
+    to: '方鑽',
+  },
+  {
+    from: '隱普方鑽',
+    to: '方鑽',
+  },
+];
+
+const RarityTransfer = r =>
+  transferRarityArr.findIndex(el => el.from === r) === -1
+    ? r
+    : transferRarityArr.find(el => el.from === r).to;
 
 export const reptileCardInfo = async (file, imgFilePath) => {
   console.log(gradient.rainbow('Start Reptile Cards Information'));
@@ -62,12 +159,14 @@ export const reptileCardInfo = async (file, imgFilePath) => {
     card_id_arr,
     card_product_information_type_arr,
     card_rarity_arr,
+    names,
   ) => {
     let arr = [];
     for (let i = 0; i < card_id_arr.length; i++) {
       const card_id = card_id_arr[i];
       const card_product_information_type = card_product_information_type_arr[i];
-      const card_rarity = card_rarity_arr[i];
+      const coolName = names[i].indexOf('異圖') !== -1;
+      const card_rarity = `${coolName ? '異圖-' : ''}${card_rarity_arr[i]}`;
 
       if (
         arr.find(
@@ -122,8 +221,10 @@ export const reptileCardInfo = async (file, imgFilePath) => {
         cardInfo.name = useReptile2Split(
           $('tr[bgcolor="#E8F4FF"] td[width="22%"][align="center"]'),
         )[0];
+        const names = useReptile2Split($('tr[bgcolor="#E8F4FF"] td[width="22%"][align="center"]'));
         if (cardInfo.name === undefined) {
           errorControl(spinner, cardInfo, set, file);
+          errorBox.push(cardInfo.number);
           return;
         }
 
@@ -139,7 +240,7 @@ export const reptileCardInfo = async (file, imgFilePath) => {
           if (jud_correct_info($(rarity).text()))
             jud_correct_info($(rarity).text()) === 1
               ? (cardInfo.attribute = useReptile2Str($(rarity).text()))
-              : card_rarity_arr.push(useReptile2Str($(rarity).text()));
+              : card_rarity_arr.push(RarityTransfer(useReptile2Str($(rarity).text())));
           else if ($(rarity).text() === '內容' && cardInfo.effect === '')
             cardInfo.effect = await getDesc(rarity, $);
 
@@ -169,33 +270,15 @@ export const reptileCardInfo = async (file, imgFilePath) => {
           i % 2 === 1 ? (cardInfo.def = info) : (cardInfo.atk = info);
         }
 
-        //! 取得圖片(base64)
-        if (
-          fs
-            .readdirSync(imgFilePath)
-            .find(el => el.indexOf(cardInfo.number.replace(/\b(0+)/g, '')) !== -1)
-        ) {
-          const imgPath = `${imgFilePath}\\${cardInfo.number.replace(/\b(0+)/g, '')}.jpg`;
-          cardInfo.photo = `data:image/jpg;base64,${fs.readFileSync(imgPath, {
-            encoding: 'base64',
-          })}`;
-        } else
-          spinner.update({
-            text: chalk.bgRedBright.white(
-              `Card Number : ${cardInfo.number} not find picture information !`,
-            ),
-          });
+        const finalData = makeMoreData(
+          cardInfo,
+          card_id_arr,
+          card_product_information_type_arr,
+          card_rarity_arr,
+          names,
+        );
 
-        //
-        final = [
-          ...final,
-          ...makeMoreData(
-            cardInfo,
-            card_id_arr,
-            card_product_information_type_arr,
-            card_rarity_arr,
-          ),
-        ];
+        final = [...final, ...finalData];
         spinner.success({
           text: `Get Card ${chalk.whiteBright.bgGreen(
             ` ${cardInfo.number} - ${cardInfo.name}`,
@@ -222,6 +305,7 @@ export const reptileCardInfo = async (file, imgFilePath) => {
 export const reptileOptions = async () => {
   console.log(gradient.rainbow('Start Reptile Options'));
   let final = {};
+  let errorMsg = [];
   const res = await useReptileTargetUrl('http://220.134.173.17/gameking/card/ocg_index.asp');
   const body = iconv.decode(Buffer.from(res), 'Big5');
   const $ = cheerio.load(body);
@@ -230,27 +314,46 @@ export const reptileOptions = async () => {
   const makeProductInfoPackType = async pack => {
     for (let i = 0; i < pack.length; i++) {
       const pp = pack[i];
-      const x = await useReptileTargetUrl(
-        `http://220.134.173.17/gameking/card/ocg_list.asp?call_item=12&call_data=${useBig5_encode(
-          pp.name,
-        )}`,
-      );
-      const bodyS = iconv.decode(Buffer.from(x), 'Big5');
-      const $$ = cheerio.load(bodyS);
-      pack[i].packType = useReptile2Split(
-        $$('tr[bgcolor="#E8F4FF"] td[width="09%"][align="center"]'),
-      )[0].split('-')[0];
+      try {
+        const x = await useReptileTargetUrl(
+          `http://220.134.173.17/gameking/card/ocg_list.asp?call_item=12&call_data=${useBig5_encode(
+            pp.name,
+          )}`,
+        );
+        const bodyS = iconv.decode(Buffer.from(x), 'Big5');
+        const $$ = cheerio.load(bodyS);
+        const final = useReptile2Split(
+          $$('tr[bgcolor="#E8F4FF"] td[width="09%"][align="center"]'),
+        )[0];
+        if (!final) {
+          errorMsg.push(pp.name);
+          console.log(pp.name, ':', chalk.red('Error!!!'));
+          pack[i].packType = '';
+        } else {
+          console.log(pp.name, ':', chalk.blue(final));
+          pack[i].packType = final.split('-')[0];
+        }
+      } catch (e) {
+        errorMsg.push(pp.name);
+        console.log(pp.name, ':', chalk.red('Error!!!'));
+        pack[i].packType = '';
+      }
     }
 
     return pack;
   };
 
-  const search_option = ss => {
+  const search_option = (ss, xx = 0) => {
     let box = [];
     $(ss)
       .children()
       .each((x, cc) => {
-        if ($(cc).text() != '' && $(cc).text().indexOf('無') == -1) box.push($(cc).text());
+        if ($(cc).text() != '' && $(cc).text().indexOf('無') == -1)
+          if (!xx) box.push($(cc).text());
+          else {
+            const rare = RarityTransfer($(cc).text());
+            if (box.findIndex(el => el === rare) === -1) box.push(rare);
+          }
       });
 
     return box;
@@ -275,7 +378,7 @@ export const reptileOptions = async () => {
         final.race = search_option(ss);
         break;
       case '型式':
-        final.rare = search_option(ss);
+        final.rare = search_option(ss, 1);
         break;
       case '包裝分類':
         let pack = search_option(ss).filter(
@@ -297,6 +400,7 @@ export const reptileOptions = async () => {
   }
 
   const productInformation = await makeProductInfoPackType(final.product_information_type);
+  console.log(chalk.red(errorMsg));
   return {
     options: final,
     productInformation,
