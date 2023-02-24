@@ -1,6 +1,8 @@
 import axios from 'axios';
-import chalk from 'chalk';
-import fs from 'fs';
+import * as cheerio from 'cheerio';
+import iconv from 'iconv-lite';
+import { useReptileTargetUrl } from './reptile/index.js';
+import gradient from 'gradient-string';
 
 let times = new Date();
 
@@ -9,6 +11,7 @@ const price_temp = {
   price: 0,
   price_lowest: 0,
   price_avg: 0,
+  price_yuyu: 0,
 };
 
 const count_low_1 = prices =>
@@ -26,7 +29,23 @@ const count_low_2 = prices =>
       0.8,
   );
 
+const getPriceYuYu = async (name, rares) => {
+  const URL = 'https://yuyu-tei.jp/game_ygo/sell/sell_price.php?name=' + name;
+  const url = await useReptileTargetUrl(URL);
+  const body = iconv.decode(Buffer.from(url), 'Big5');
+  const $ = cheerio.load(body);
+  let rare = [];
+  $('.gr_color').each((n, color) => {
+    const rare = $(color).text();
+    const target = $(`.card_unit.rarity_${rare} > .price_box > form > .price > b`);
+    target.each((tt, tar) => {});
+  });
+
+  console.log(rare);
+};
+
 const reptilePrice = async () => {
+  console.log(gradient.rainbow('Start Reptile Cards Information'));
   // TEMP
   let number = 'PAC1-JP021';
   let rarity = ['普鑽', '半鑽', '異圖-半鑽', '白鑽', '異圖-白鑽'];
@@ -55,6 +74,8 @@ const reptilePrice = async () => {
   );
 
   price.price_lowest = count_low_1(pricesAbnormal);
+
+  price.price_yuyu = await getPriceYuYu(number, rarity[0]);
 
   console.log(price);
 

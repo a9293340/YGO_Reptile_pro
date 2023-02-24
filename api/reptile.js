@@ -292,13 +292,13 @@ export const reptileCardInfo = async (file, imgFilePath) => {
       console.log(error);
       errorBox.push(cardInfo.number);
     }
+    spinner.stop();
     await useDelay(Math.random() * 100);
   }
 
   if (errorBox.length > file.errorList.length) {
     file.errorList = errorBox;
   }
-
   return { final, file };
 };
 
