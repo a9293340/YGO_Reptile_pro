@@ -21,7 +21,8 @@ const updatedJson = (newData, file) => {
 };
 
 // './database/card_number.json'
-const checkDataFromYgoProPic = path => checkCardNumber(JSON.parse(fs.readFileSync(path)));
+const checkDataFromYgoProPic = path =>
+  checkCardNumber(JSON.parse(fs.readFileSync('./database/card_number.json')));
 const checkDataFromJson = path => JSON.parse(fs.readFileSync(path));
 
 const getOptions = async (updateOption, cb = async () => {}) => {
@@ -75,15 +76,8 @@ const getCardInfo = async () => {
   //* 把新增的卡號紀錄在JSON中
   file = updatedJson(newData, file);
 
-  // Image File Control
-  const imgFilePath = await inquirer.prompt({
-    type: 'input',
-    name: 'path',
-    message: 'Input update image file path.',
-  });
-
   //* 爬蟲
-  const getData = await reptileCardInfo(file, imgFilePath.path);
+  const getData = await reptileCardInfo(file);
 
   const allData = [
     ...JSON.parse(fs.readFileSync('./database/cardInfo.json').toString()),
@@ -101,25 +95,19 @@ const getCardInfo = async () => {
 
 const getRutenInfo = async () => {
   console.log(gradient.rainbow('========  Reptile YGO Cards Price ========'));
+  let price = await reptilePrice(JSON.parse(fs.readFileSync('./database/cardInfo.json')));
 
-  const answers = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'useToGetNewPath',
-      message: 'Which card you want to search?',
-    },
-    {
-      type: 'list',
-      name: 'useToGetNewData',
-      message: 'Please select an item to search by.',
-      choices: [
-        { name: 'Average (Average of up to 50 items)', value: '1' },
-        { name: 'Cheapest average', value: '2' },
-      ],
-    },
-  ]);
-  let target = answers.useToGetNewPath.replace(' ', '+') + '&sort=prc%2Fac';
-  let price = await reptilePrice(target, answers.useToGetNewData);
+  fs.writeFileSync('./database/cardInfo2.json', JSON.stringify(price.cardInfo));
+  if (price.errorBox.length)
+    fs.writeFileSync(
+      `./database/price_error_${new Date().toISOString()}.json`,
+      JSON.stringify(price.errorBox),
+    );
+
+  console.log(
+    chalk.white.bgGreen.bold('Updated Data Price Successful !'),
+    `,total updated ${price.cardInfo.length} data`,
+  );
 };
 
 async function main() {
@@ -147,10 +135,10 @@ async function main() {
 
   //! go to ruten reptile
   if (answers.updateOption === '4') getRutenInfo();
-
-  answers.updateOption === '2'
-    ? await getCardInfo()
-    : await getOptions(answers.updateOption, getCardInfo);
+  else
+    answers.updateOption === '2'
+      ? await getCardInfo()
+      : await getOptions(answers.updateOption, getCardInfo);
 }
 
 main();

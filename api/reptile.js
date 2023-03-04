@@ -33,15 +33,15 @@ const transferRarityArr = [
     to: '紅字半鑽',
   },
   {
-    from: '凸版',
+    from: '凸版浮雕',
     to: '浮雕',
   },
   {
-    from: '20th紅全鑽',
+    from: '20th紅鑽',
     to: '紅鑽',
   },
   {
-    from: '25th鑽',
+    from: '25th金鑽',
     to: '金鑽',
   },
   {
@@ -54,7 +54,7 @@ const transferRarityArr = [
   },
   {
     from: '銀字字紋鑽',
-    to: '古文鑽',
+    to: '銀字KC紋',
   },
   {
     from: '亮面字紋鑽',
@@ -124,6 +124,10 @@ const transferRarityArr = [
     from: '隱普方鑽',
     to: '方鑽',
   },
+  {
+    from: '其他',
+    to: '不鏽鋼',
+  },
 ];
 
 const RarityTransfer = r =>
@@ -131,14 +135,14 @@ const RarityTransfer = r =>
     ? r
     : transferRarityArr.find(el => el.from === r).to;
 
-export const reptileCardInfo = async (file, imgFilePath) => {
+export const reptileCardInfo = async file => {
   console.log(gradient.rainbow('Start Reptile Cards Information'));
   let final = [];
   //! function
   const jud_correct_info = text =>
     options.attribute.find(el => text.indexOf(el) !== -1)
       ? 1
-      : options.rare.find(el => text.indexOf(el) !== -1)
+      : options.rareAll.find(el => text.indexOf(el) !== -1)
       ? 2
       : 0;
   const getDesc = async (rarity, $) => {
@@ -166,18 +170,16 @@ export const reptileCardInfo = async (file, imgFilePath) => {
       const card_id = card_id_arr[i];
       const card_product_information_type = card_product_information_type_arr[i];
       const coolName = names[i].indexOf('異圖') !== -1;
-      const card_rarity = `${coolName ? '異圖-' : ''}${card_rarity_arr[i]}`;
-
+      const card_rarity = `${coolName ? '異圖-' : ''}${RarityTransfer(card_rarity_arr[i])}`;
       if (
         arr.find(
           el =>
             el.product_information_type === card_product_information_type &&
-            el.rarity.find(x => x !== card_rarity),
+            el.rarity.find(x => x !== card_rarity) &&
+            el.id === card_id,
         )
       ) {
-        let set = arr.findIndex(
-          el => el.product_information_type === card_product_information_type,
-        );
+        const set = arr.findIndex(el => el.id === card_id);
         arr[set].rarity.push(card_rarity);
       } else {
         const cp = JSON.parse(JSON.stringify(cardInfo));
@@ -187,18 +189,26 @@ export const reptileCardInfo = async (file, imgFilePath) => {
         arr.push(cp);
       }
     }
-
     return arr;
   };
 
   const errorControl = (spinner, cardInfo, set, file) =>
-    spinner.error({
-      text: `Card Number : ${chalk.white.bgRed(
-        `${cardInfo.number} is not existed!`,
-      )} Current progress [${set + 1}/${file.lastAdd.length}] ${chalk.blue(
-        ` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `,
-      )}`,
-    });
+    spinner
+      .error({
+        text: `Card Number : ${chalk.white.bgRed(
+          `${cardInfo.number} is not existed!`,
+        )} Current progress [${set + 1}/${file.lastAdd.length}] ${chalk.blue(
+          ` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `,
+        )}`,
+      })
+      .clear();
+
+  const checkIdRules = str => {
+    while (/[A-Za-z]$/.test(str)) {
+      str = str.substring(0, str.length - 1);
+    }
+    return str;
+  };
 
   //
   let errorBox = file.errorList;
@@ -207,10 +217,11 @@ export const reptileCardInfo = async (file, imgFilePath) => {
     let card_id_arr = [];
     let card_product_information_type_arr = [];
     let card_rarity_arr = [];
+    let names = [];
     cardInfo.number = file.lastAdd[set];
-    const spinner = createSpinner(
-      `Get Card Number : ${chalk.whiteBright.bgMagenta(cardInfo.number)}  Information`,
-    ).start();
+    const spinner = createSpinner().start({
+      text: `Get Card Number : ${chalk.whiteBright.bgMagenta(cardInfo.number)}  Information`,
+    });
     try {
       await useReptileByForm('http://220.134.173.17/gameking/card/ocg_list.asp', {
         form_data13: `${cardInfo.number}`,
@@ -221,30 +232,10 @@ export const reptileCardInfo = async (file, imgFilePath) => {
         cardInfo.name = useReptile2Split(
           $('tr[bgcolor="#E8F4FF"] td[width="22%"][align="center"]'),
         )[0];
-        const names = useReptile2Split($('tr[bgcolor="#E8F4FF"] td[width="22%"][align="center"]'));
         if (cardInfo.name === undefined) {
           errorControl(spinner, cardInfo, set, file);
           errorBox.push(cardInfo.number);
           return;
-        }
-
-        //! 卡號 (多)
-        card_id_arr = useReptile2Split($('tr[bgcolor="#E8F4FF"] td[width="09%"][align="center"]'));
-        //! 產品包代號(多)
-        card_product_information_type_arr = card_id_arr.map(el => el.split('-')[0]);
-
-        //! 稀有度 (多)& 屬性
-        const rarity_attribute = $('tr[bgcolor="#E8F4FF"] td[width="05%"][align="center"]');
-        for (let i = 0; i < rarity_attribute.length; i++) {
-          const rarity = rarity_attribute[i];
-          if (jud_correct_info($(rarity).text()))
-            jud_correct_info($(rarity).text()) === 1
-              ? (cardInfo.attribute = useReptile2Str($(rarity).text()))
-              : card_rarity_arr.push(RarityTransfer(useReptile2Str($(rarity).text())));
-          else if ($(rarity).text() === '內容' && cardInfo.effect === '')
-            cardInfo.effect = await getDesc(rarity, $);
-
-          await useDelay(Math.random() * 100);
         }
 
         //! 星數
@@ -270,6 +261,50 @@ export const reptileCardInfo = async (file, imgFilePath) => {
           i % 2 === 1 ? (cardInfo.def = info) : (cardInfo.atk = info);
         }
 
+        //! page
+        const page = $('tr[bgcolor="#C1E0FF"] > td > select').first().children().length;
+        for (let p = 0; p < page; p++) {
+          const pageUrl =
+            'http://220.134.173.17/gameking/card/ocg_list.asp' +
+            `?call_item=13&call_data=${
+              cardInfo.number
+            }&call_sql=Select%20*%20from%20ocg%20where%20ocg_password%20=%20%27${
+              cardInfo.number
+            }%27%20order%20by%20ocg_no%20asc&Page=${p + 1}`;
+          const res = await useReptileTargetUrl(pageUrl);
+          const bodyS = iconv.decode(Buffer.from(res), 'Big5');
+          const $s = cheerio.load(bodyS);
+
+          //! 所有名稱
+          names = [
+            ...names,
+            ...useReptile2Split($('tr[bgcolor="#E8F4FF"] td[width="22%"][align="center"]')),
+          ];
+
+          //! 卡號 (多)
+          card_id_arr = [
+            ...card_id_arr,
+            ...useReptile2Split($s('tr[bgcolor="#E8F4FF"] td[width="09%"][align="center"]')).map(
+              el => checkIdRules(el),
+            ),
+          ];
+          //! 稀有度 (多)& 屬性
+          const rarity_attribute = $s('tr[bgcolor="#E8F4FF"] td[width="05%"][align="center"]');
+          for (let i = 0; i < rarity_attribute.length; i++) {
+            const rarity = rarity_attribute[i];
+            if (jud_correct_info($s(rarity).text()))
+              jud_correct_info($s(rarity).text()) === 1
+                ? (cardInfo.attribute = useReptile2Str($s(rarity).text()))
+                : card_rarity_arr.push(useReptile2Str($s(rarity).text()));
+            else if ($s(rarity).text() === '內容' && cardInfo.effect === '')
+              cardInfo.effect = await getDesc(rarity, $s);
+            await useDelay(Math.random() * 100);
+          }
+        }
+
+        //! 產品包代號(多)
+        card_product_information_type_arr = card_id_arr.map(el => el.split('-')[0]);
+
         const finalData = makeMoreData(
           cardInfo,
           card_id_arr,
@@ -279,20 +314,18 @@ export const reptileCardInfo = async (file, imgFilePath) => {
         );
 
         final = [...final, ...finalData];
-        spinner.success({
-          text: `Get Card ${chalk.whiteBright.bgGreen(
-            ` ${cardInfo.number} - ${cardInfo.name}`,
-          )} Success! Current progress [${set + 1}/${file.lastAdd.length}] ${chalk.blue(
-            ` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `,
-          )}`,
-        });
+        const text = `Get Card ${chalk.whiteBright.bgGreen(
+          ` ${cardInfo.number} - ${cardInfo.name}`,
+        )} Success! Current progress [${set + 1}/${file.lastAdd.length}] ${chalk.blue(
+          ` ${parseInt(((set + 1) / file.lastAdd.length) * 1000000) / 10000}% `,
+        )}`;
+        spinner.success({ text }).clear();
       });
     } catch (error) {
-      // errorControl(spinner, cardInfo, set, file);
-      console.log(error);
+      // console.log(error);
+      errorControl(spinner, cardInfo, set, file);
       errorBox.push(cardInfo.number);
     }
-    spinner.stop();
     await useDelay(Math.random() * 100);
   }
 
@@ -348,7 +381,7 @@ export const reptileOptions = async () => {
     $(ss)
       .children()
       .each((x, cc) => {
-        if ($(cc).text() != '' && $(cc).text().indexOf('無') == -1)
+        if ($(cc).text() != '' && $(cc).text().indexOf('無') == -1 && $(cc).text() != '其他')
           if (!xx) box.push($(cc).text());
           else {
             const rare = RarityTransfer($(cc).text());
@@ -379,6 +412,7 @@ export const reptileOptions = async () => {
         break;
       case '型式':
         final.rare = search_option(ss, 1);
+        final.rareAll = search_option(ss);
         break;
       case '包裝分類':
         let pack = search_option(ss).filter(
