@@ -329,6 +329,9 @@ export const reptileCardInfo = async file => {
     await useDelay(Math.random() * 100);
   }
 
+  //! 韓文 out!
+  final = final.map(el => el.id.indexOf('-KR') === -1 && el.id.indexOf('-EN') === -1);
+
   if (errorBox.length > file.errorList.length) {
     file.errorList = errorBox;
   }

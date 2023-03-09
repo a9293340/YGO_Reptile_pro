@@ -6,7 +6,6 @@ import gradient from 'gradient-string';
 import { createSpinner } from 'nanospinner';
 import chalk from 'chalk';
 import { useDelay } from './tools/index.js';
-import { delay } from './tools/delay.js';
 let times = new Date();
 
 const price_temp = {
@@ -43,8 +42,8 @@ const transfer = [
     to: ['金亮', '紅亮', '藍亮', '金亮點鑽', '金亮碎鑽', '金亮方鑽'],
   },
   {
-    from: ['SE'],
-    to: ['半鑽', '紅字半鑽', '藍鑽', '半鑽點鑽', '半鑽碎鑽', '半鑽方鑽'],
+    from: ['SE', 'GSE'],
+    to: ['半鑽', '紅字半鑽', '藍鑽', '半鑽點鑽', '半鑽碎鑽', '半鑽方鑽', '斜鑽'],
   },
   {
     from: ['EXSE', 'P-EXSE'],
@@ -79,7 +78,7 @@ const transfer = [
     to: ['黃金'],
   },
   {
-    from: ['20thSE'],
+    from: ['20thSE', '10000SE'],
     to: ['紅鑽'],
   },
   {
@@ -125,6 +124,7 @@ const count_low_2 = prices =>
 
 const getPriceYuYu = async (name, rares) => {
   let targetPrice = 0;
+  await useDelay(Math.random() * 300);
   try {
     const URL = 'https://yuyu-tei.jp/game_ygo/sell/sell_price.php?name=' + name;
     const url = await useReptileTargetUrl(URL);
@@ -172,6 +172,7 @@ const getPriceYuYu = async (name, rares) => {
 export const reptilePrice = async cardInfo => {
   console.log(gradient.rainbow('Start Reptile Cards Information'));
   let errorBox = [];
+  const startTime = new Date();
   //! 銀亮 跳過
   // TEMP 23
   for (let c = 0; c < cardInfo.length; c++) {
@@ -181,13 +182,14 @@ export const reptilePrice = async cardInfo => {
     let allPrice = cardInfo[c].price_info;
     let isFalse = 0;
     if (rarity.find(el => el === '銀亮')) continue;
-    // if (number !== 'SOI-JP051') continue;
+    // if (number !== 'ST14-JP008') continue;
     const spinner = createSpinner().start({
       text: `Get Card Number : ${chalk.whiteBright.bgMagenta(number)}  Price Information`,
     });
     try {
       for (let r = 0; r < rarity.length; r++) {
-        await useDelay(Math.random() * 800);
+        // console.log(rarity);
+        await useDelay(Math.random() * 350);
         isFalse = 0;
         const rar = rarity[r];
         let price = JSON.parse(JSON.stringify(price_temp));
@@ -255,6 +257,7 @@ export const reptilePrice = async cardInfo => {
         }
 
         price.price_yuyu = await getPriceYuYu(number, rar);
+        // console.log(price);
 
         if (!price.price_yuyu) errorControls('yuyu');
         if (isFalse < 3) allPrice.push(price);
@@ -263,7 +266,12 @@ export const reptilePrice = async cardInfo => {
       isFalse = 3;
     }
     cardInfo[c].price_info = allPrice;
-    const successWords = allPrice.map(el => `${el.rarity}-${el.price_avg}`).join(' / ');
+    const successWords = allPrice
+      .filter(el => el.time === price_temp.time)
+      .map(el => `${el.rarity}-${el.price_avg}-${el.price_yuyu}`)
+      .join(' / ');
+    const totalSpendTime = `Total Spend ${chalk.bgGray((new Date() - startTime) / 1000)} sec`;
+
     isFalse < 3
       ? spinner
           .success({
@@ -271,7 +279,9 @@ export const reptilePrice = async cardInfo => {
               ` ${number}`,
             )} Price Success! (${successWords}) Current progress [${c + 1}/${
               cardInfo.length
-            }] ${chalk.blue(` ${parseInt(((c + 1) / cardInfo.length) * 1000000) / 10000}% `)}`,
+            }] ${chalk.blue(
+              ` ${parseInt(((c + 1) / cardInfo.length) * 1000000) / 10000}% `,
+            )} ${totalSpendTime} `,
           })
           .clear()
       : spinner
@@ -280,11 +290,11 @@ export const reptilePrice = async cardInfo => {
               `${number} can not reptile price!`,
             )} Current progress [${c + 1}/${cardInfo.length}] ${chalk.blue(
               ` ${parseInt(((c + 1) / cardInfo.length) * 1000000) / 10000}% `,
-            )}`,
+            )} ${totalSpendTime}`,
           })
           .clear();
   }
-
+  console.log(chalk.bgBlue(`Total Spend ${(new Date() - startTime) / 1000} sec !`));
   return {
     cardInfo,
     errorBox,

@@ -95,14 +95,14 @@ const getCardInfo = async () => {
 
 const getRutenInfo = async () => {
   console.log(gradient.rainbow('========  Reptile YGO Cards Price ========'));
-  let price = await reptilePrice(JSON.parse(fs.readFileSync('./database/cardInfo.json')));
+  let price = await reptilePrice(JSON.parse(fs.readFileSync('./database/cardInfo2.json')));
 
-  fs.writeFileSync('./database/cardInfo2.json', JSON.stringify(price.cardInfo));
-  if (price.errorBox.length)
-    fs.writeFileSync(
-      `./database/price_error_${new Date().toISOString()}.json`,
-      JSON.stringify(price.errorBox),
-    );
+  // fs.writeFileSync('./database/cardInfo2.json', JSON.stringify(price.cardInfo));
+  // if (price.errorBox.length)
+  //   fs.writeFileSync(
+  //     `./database/price_error_${new Date().toISOString().split(':')[0]}.json`,
+  //     JSON.stringify(price.errorBox),
+  //   );
 
   console.log(
     chalk.white.bgGreen.bold('Updated Data Price Successful !'),
