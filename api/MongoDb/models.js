@@ -119,6 +119,11 @@ const cards = new mongoose.Schema({
   id: { type: String },
 });
 
+const cards_image = new mongoose.Schema({
+  number: { type: String },
+  photo: { type: String },
+});
+
 const decks = new mongoose.Schema({
   admin_id: { type: String },
   author_name: { type: String },
@@ -186,4 +191,5 @@ export default {
   tag,
   frontend_token,
   backend_token,
+  cards_image,
 };

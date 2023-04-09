@@ -7,6 +7,7 @@ import figlet from 'figlet';
 import gradient from 'gradient-string';
 import { reptilePrice } from './api/reptilePrice.js';
 import { batchUpload2DB } from './api/update2DB.js';
+import schedule from 'node-schedule';
 
 const checkCardNumber = file =>
   fs
@@ -112,7 +113,7 @@ const getRutenInfo = async () => {
 };
 
 async function batchUploadCardsInfo() {
-  let target = JSON.parse(fs.readFileSync('./database/cardInfo.json'));
+  let target = JSON.parse(fs.readFileSync('./database/cardInfo.json')).slice(0, 3);
 
   const count = await batchUpload2DB(target);
   console.log(
@@ -121,6 +122,14 @@ async function batchUploadCardsInfo() {
       Warn(No image) upload : ${count.warn} data, 
       Failed upload : ${count.error} data`,
   );
+
+  process.exit();
+}
+
+async function scheduleReptilePrice() {
+  schedule.scheduleJob('scheduleReptilePrice', '0 0 0 * * *', () => {
+    getRutenInfo();
+  });
 }
 
 async function main() {
@@ -134,6 +143,8 @@ async function main() {
     }),
   );
 
+  // console.log(JSON.parse(fs.readFileSync('./database/cardInfo.json')).length);
+  // console.log(JSON.parse(fs.readFileSync('./database/card_number.json')).existed.length);
   const answers = await inquirer.prompt({
     type: 'list',
     name: 'updateOption',
@@ -143,12 +154,14 @@ async function main() {
       { name: 'Card Information', value: '2' },
       { name: 'Update Cards Information', value: '5' },
       { name: 'Ruten Reptile', value: '4' },
+      { name: 'Ruten Reptile(schedule)', value: '3' },
     ],
   });
 
   //! go to ruten reptile
   if (answers.updateOption === '4') getRutenInfo();
   else if (answers.updateOption === '5') batchUploadCardsInfo();
+  else if (answers.updateOption === '3') scheduleReptilePrice();
   else
     answers.updateOption === '2'
       ? await getCardInfo()

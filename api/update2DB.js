@@ -15,10 +15,14 @@ export const batchUpload2DB = async obj => {
       text: `Upload Card Name : ${chalk.whiteBright.bgMagenta(target.id + ':' + target.name)}`,
     });
     if (fs.statSync(`./pics/${number}.jpg`)) {
-      target['photo'] = `data:image/jpeg;base64,${await img2base(`./pics/${number}.jpg`)}`;
+      const image = {
+        number: target.number,
+        photo: `data:image/jpeg;base64,${await img2base(`./pics/${number}.jpg`)}`,
+      };
       target['price_yuyu'] = [];
       try {
         await MongooseCRUD('C', 'cards', target);
+        await MongooseCRUD('C', 'cards_image', image);
         spinner.success({ text: target.id + ':' + target.name + ' Upload success!' }).clear();
         count.success++;
       } catch (error) {

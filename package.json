@@ -27,6 +27,7 @@
     "jquery": "^3.6.3",
     "mongoose": "^7.0.3",
     "nanospinner": "^1.1.0",
+    "node-schedule": "^2.1.1",
     "qs-stringify": "^1.2.1",
     "readline-sync": "^1.4.10",
     "request": "^2.88.2",
