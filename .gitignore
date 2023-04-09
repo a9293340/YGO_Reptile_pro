@@ -2,3 +2,4 @@ node_modules
 .dist
 pics
 yarn.lock
+.env

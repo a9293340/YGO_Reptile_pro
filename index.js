@@ -6,6 +6,7 @@ import { useErrorMsg } from './api/tools/index.js';
 import figlet from 'figlet';
 import gradient from 'gradient-string';
 import { reptilePrice } from './api/reptilePrice.js';
+import { batchUpload2DB } from './api/update2DB.js';
 
 const checkCardNumber = file =>
   fs
@@ -95,20 +96,32 @@ const getCardInfo = async () => {
 
 const getRutenInfo = async () => {
   console.log(gradient.rainbow('========  Reptile YGO Cards Price ========'));
-  let price = await reptilePrice(JSON.parse(fs.readFileSync('./database/cardInfo2.json')));
+  let price = await reptilePrice(JSON.parse(fs.readFileSync('./database/cardInfo.json')));
 
-  // fs.writeFileSync('./database/cardInfo2.json', JSON.stringify(price.cardInfo));
-  // if (price.errorBox.length)
-  //   fs.writeFileSync(
-  //     `./database/price_error_${new Date().toISOString().split(':')[0]}.json`,
-  //     JSON.stringify(price.errorBox),
-  //   );
+  fs.writeFileSync('./database/cardInfo.json', JSON.stringify(price.cardInfo));
+  if (price.errorBox.length)
+    fs.writeFileSync(
+      `./database/price_error_${new Date().toISOString().split(':')[0]}.json`,
+      JSON.stringify(price.errorBox),
+    );
 
   console.log(
     chalk.white.bgGreen.bold('Updated Data Price Successful !'),
     `,total updated ${price.cardInfo.length} data`,
   );
 };
+
+async function batchUploadCardsInfo() {
+  let target = JSON.parse(fs.readFileSync('./database/cardInfo.json'));
+
+  const count = await batchUpload2DB(target);
+  console.log(
+    chalk.white.bgGreen.bold('Batch upload successful !'),
+    `,Success upload : ${count.success} data ,
+      Warn(No image) upload : ${count.warn} data, 
+      Failed upload : ${count.error} data`,
+  );
+}
 
 async function main() {
   console.log(
@@ -128,13 +141,14 @@ async function main() {
     choices: [
       { name: 'Options', value: '1' },
       { name: 'Card Information', value: '2' },
-      { name: 'All', value: '3' },
+      { name: 'Update Cards Information', value: '5' },
       { name: 'Ruten Reptile', value: '4' },
     ],
   });
 
   //! go to ruten reptile
   if (answers.updateOption === '4') getRutenInfo();
+  else if (answers.updateOption === '5') batchUploadCardsInfo();
   else
     answers.updateOption === '2'
       ? await getCardInfo()

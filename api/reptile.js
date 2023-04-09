@@ -22,7 +22,6 @@ const cardInfoObj = {
   rarity: [],
   atk: '',
   def: '',
-  product_information_type_id: 0,
   id: '',
   effect: '',
   price_info: [],
@@ -180,7 +179,8 @@ export const reptileCardInfo = async file => {
         )
       ) {
         const set = arr.findIndex(el => el.id === card_id);
-        arr[set].rarity.push(card_rarity);
+        if (arr[set].rarity.findIndex(el => el === card_rarity) === -1)
+          arr[set].rarity.push(card_rarity);
       } else {
         const cp = JSON.parse(JSON.stringify(cardInfo));
         cp.id = card_id;
@@ -330,7 +330,7 @@ export const reptileCardInfo = async file => {
   }
 
   //! 韓文 out!
-  final = final.map(el => el.id.indexOf('-KR') === -1 && el.id.indexOf('-EN') === -1);
+  final = final.filter(el => el.id.indexOf('-KR') === -1 && el.id.indexOf('-EN') === -1);
 
   if (errorBox.length > file.errorList.length) {
     file.errorList = errorBox;

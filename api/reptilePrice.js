@@ -13,7 +13,6 @@ const price_temp = {
   rarity: '',
   price_lowest: 0,
   price_avg: 0,
-  price_yuyu: 0,
 };
 
 const transfer = [
@@ -124,7 +123,7 @@ const count_low_2 = prices =>
 
 const getPriceYuYu = async (name, rares) => {
   let targetPrice = 0;
-  await useDelay(Math.random() * 300);
+  await useDelay(Math.random() * 1000);
   try {
     const URL = 'https://yuyu-tei.jp/game_ygo/sell/sell_price.php?name=' + name;
     const url = await useReptileTargetUrl(URL);
@@ -173,28 +172,29 @@ export const reptilePrice = async cardInfo => {
   console.log(gradient.rainbow('Start Reptile Cards Information'));
   let errorBox = [];
   const startTime = new Date();
-  //! 銀亮 跳過
   // TEMP 23
   for (let c = 0; c < cardInfo.length; c++) {
     if (!c % 100 && c) await useDelay(20000);
     const number = cardInfo[c].id;
-    const rarity = cardInfo[c].rarity;
+    const rarity = [...new Set(cardInfo[c].rarity)];
     let allPrice = cardInfo[c].price_info;
     let isFalse = 0;
+    //! 銀亮 跳過
     if (rarity.find(el => el === '銀亮')) continue;
-    // if (number !== 'ST14-JP008') continue;
+    // if (number !== '301-051') continue;
     const spinner = createSpinner().start({
       text: `Get Card Number : ${chalk.whiteBright.bgMagenta(number)}  Price Information`,
     });
     try {
+      // console.log(rarity);
       for (let r = 0; r < rarity.length; r++) {
         // console.log(rarity);
-        await useDelay(Math.random() * 350);
+        await useDelay(500);
         isFalse = 0;
         const rar = rarity[r];
         let price = JSON.parse(JSON.stringify(price_temp));
         price.rarity = rar;
-
+        const rarityWords = rar !== '普卡' ? '+' + rar : '';
         const errorControls = type => {
           price[`price_${type}`] = null;
           errorBox.push({
@@ -205,7 +205,7 @@ export const reptilePrice = async cardInfo => {
           isFalse++;
         };
 
-        const searchURL = `https://rtapi.ruten.com.tw/api/search/v3/index.php/core/prod?q=${number}+${rar}&type=direct&sort=prc%2Fac&offset=1&limit=100`;
+        const searchURL = `https://rtapi.ruten.com.tw/api/search/v3/index.php/core/prod?q=${number}${rarityWords}&type=direct&sort=prc%2Fac&offset=1&limit=100`;
         const targets = (await axios.get(searchURL)).data.Rows.map(el => el.Id);
         if (targets.length) {
           const searchPriceURL = `https://rtapi.ruten.com.tw/api/prod/v2/index.php/prod?id=${targets.join(
@@ -213,10 +213,11 @@ export const reptilePrice = async cardInfo => {
           )}`;
           let prices = (await axios.get(searchPriceURL)).data
             .filter(el => el.Currency === 'TWD')
+            .filter(el => el.StockQty > el.SoldQty)
             .map(el => el.PriceRange[1])
             .filter(el => Number.isInteger(el))
             .filter(el => el < 150000);
-          if (prices.length < 3) {
+          if (prices.length <= 3) {
             if (!prices.length) {
               errorControls('avg');
               errorControls('lowest');
@@ -224,31 +225,19 @@ export const reptilePrice = async cardInfo => {
               price.price_avg = Math.round(prices.reduce((a, b) => a + b) / prices.length);
               price.price_lowest = Math.round(prices.reduce((a, b) => a + b) / prices.length);
             }
-            price.price_yuyu = await getPriceYuYu(number, rar);
-            if (!price.price_yuyu) errorControls('yuyu');
-            if (isFalse < 3) allPrice.push(price);
+            if (isFalse < 2) allPrice.push(price);
             break;
           }
-          const mid = Math.round(prices.length / 2);
-          const findRange = [mid - Math.round(mid / 2) - 1, mid + Math.round(mid / 2) - 1];
+
           //! avg
           try {
-            price.price_avg = Math.round(
-              prices.slice(findRange[0], findRange[1] + 1).reduce((a, b) => a + b) /
-                prices.slice(findRange[0], findRange[1] + 1).length,
-            );
+            prices = outlierDetector(prices);
+            if (prices.reduce((a, b) => a + b) / prices.length > 1000)
+              prices = outlierDetector(prices);
+            price.price_avg = Math.round(weight_function(prices, 'low'));
+            price.price_lowest = Math.round(weight_function(prices, 'lowest'));
           } catch (e) {
             errorControls('avg');
-          }
-
-          //! low
-          let pricesAbnormal = prices.filter(
-            el => el >= price.price_avg * 0.25 && el <= price.price_avg * 2,
-          );
-
-          try {
-            price.price_lowest = count_low_1(pricesAbnormal);
-          } catch (e) {
             errorControls('lowest');
           }
         } else {
@@ -256,23 +245,19 @@ export const reptilePrice = async cardInfo => {
           errorControls('lowest');
         }
 
-        price.price_yuyu = await getPriceYuYu(number, rar);
-        // console.log(price);
-
-        if (!price.price_yuyu) errorControls('yuyu');
-        if (isFalse < 3) allPrice.push(price);
+        if (isFalse < 2) allPrice.push(price);
       }
     } catch (e) {
-      isFalse = 3;
+      isFalse = 2;
     }
     cardInfo[c].price_info = allPrice;
     const successWords = allPrice
       .filter(el => el.time === price_temp.time)
-      .map(el => `${el.rarity}-${el.price_avg}-${el.price_yuyu}`)
+      .map(el => `${el.rarity}-${el.price_lowest}-${el.price_avg}`)
       .join(' / ');
     const totalSpendTime = `Total Spend ${chalk.bgGray((new Date() - startTime) / 1000)} sec`;
 
-    isFalse < 3
+    isFalse < 2
       ? spinner
           .success({
             text: `Get Card ${chalk.whiteBright.bgGreen(
@@ -299,4 +284,67 @@ export const reptilePrice = async cardInfo => {
     cardInfo,
     errorBox,
   };
+};
+
+const weight_function = (prices, type) => {
+  let { q1, q3 } = q3Detector(prices);
+  const jud = prices.reduce((a, b) => a + b) / prices.length > 1000;
+  let avg = jud
+    ? prices.reduce((a, b) => (b < q1 ? a + b * 1.25 : b > q3 ? a + b * 0.75 : a + b)) /
+      prices.length
+    : prices.reduce((a, b) => (b > q3 ? a + q3 : a + b)) / prices.length;
+  let lowest = prices[0];
+  let low = jud
+    ? prices.reduce((a, b) => (b < q1 ? a + b * 1.25 : b < (q1 + q3) / 2 ? a + b : a + b * 0.75)) /
+      prices.length
+    : prices.reduce((a, b) => (b <= (q1 + q3) / 2 ? a + b : a)) /
+      prices.filter(el => el <= (q1 + q3) / 2).length;
+  low = low < lowest ? lowest : low;
+
+  return type === 'low' ? low : lowest;
+};
+
+const outlierDetector = collection => {
+  const sortedCollection = collection.slice().sort((a, b) => a - b);
+
+  let { q1, q3 } = q3Detector(sortedCollection);
+  if (!q1 && !q3) return collection;
+  const iqr = q3 - q1;
+  let maxValue = q3 + iqr * 1.5;
+  if (maxValue > sortedCollection[sortedCollection.length - 1])
+    maxValue = sortedCollection[sortedCollection.length - 1];
+  //q1 - iqr * 1.5 > 0 ? q1 - iqr * 1.5 : q1
+  const min = sortedCollection.filter(el => el <= q1);
+  const minValue = min.reduce((a, b) => a + b) / min.length;
+  // console.log(q1, maxValue, minValue);
+  return q1 === q3
+    ? sortedCollection
+    : sortedCollection.filter(value => value < maxValue && value >= minValue);
+};
+
+const q3Detector = collection => {
+  const size = collection.length;
+
+  let q1, q3;
+
+  if (size < 2) {
+    return { q1: 0, q3: 0 };
+  }
+
+  const sortedCollection = collection.slice().sort((a, b) => a - b);
+
+  if (((size - 1) / 4) % 1 === 0 || (size / 4) % 1 === 0) {
+    q1 =
+      (1 / 2) *
+      (sortedCollection[Math.floor(size / 4) - 1] + sortedCollection[Math.floor(size / 4)]);
+    q3 =
+      (1 / 2) *
+      (sortedCollection[Math.ceil((size * 3) / 4) - 1] +
+        sortedCollection[Math.ceil((size * 3) / 4)]);
+  } else {
+    q1 = sortedCollection[Math.floor(size / 4)];
+    q3 = sortedCollection[Math.floor((size * 3) / 4)];
+  }
+
+  return { q1, q3 };
 };
