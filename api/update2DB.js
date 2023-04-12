@@ -4,6 +4,7 @@ import gradient from 'gradient-string';
 import { createSpinner } from 'nanospinner';
 import img2base from 'image-to-base64';
 import fs from 'fs';
+import { useDelay } from './tools/index.js';
 
 export const batchLoadPT = async obj => {
   console.log(gradient.rainbow('Start batch upload cards information to database!'));
@@ -41,9 +42,18 @@ export const batchUpload2DB = async obj => {
       };
       target['price_yuyu'] = [];
       try {
+        let hasImage = false;
         await MongooseCRUD('C', 'cards', target);
-        await MongooseCRUD('C', 'cards_image', image);
-        spinner.success({ text: target.id + ':' + target.name + ' Upload success!' }).clear();
+        const arr = await MongooseCRUD('R', 'cards_image', { number: target.number });
+        if (!arr.length) {
+          await MongooseCRUD('C', 'cards_image', image);
+          hasImage = true;
+        }
+        spinner
+          .success({
+            text: `${target.id} : ${target.name} Upload success!${hasImage ? '!!!' : ''}`,
+          })
+          .clear();
         count.success++;
       } catch (error) {
         spinner.error({ text: target.id + ':' + target.name + ' Upload failed!' }).clear();
@@ -59,6 +69,7 @@ export const batchUpload2DB = async obj => {
         count.error++;
       }
     }
+    await useDelay(50);
   }
 
   return count;

@@ -97,7 +97,7 @@ const getCardInfo = async () => {
 
 const getRutenInfo = async () => {
   console.log(gradient.rainbow('========  Reptile YGO Cards Price ========'));
-  let price = await reptilePrice(JSON.parse(fs.readFileSync('./database/cardInfo.json')));
+  let price = await reptilePrice();
 
   fs.writeFileSync('./database/cardInfo.json', JSON.stringify(price.cardInfo));
   if (price.errorBox.length)
@@ -157,7 +157,6 @@ async function main() {
       whitespaceBreak: true,
     }),
   );
-
   // console.log(JSON.parse(fs.readFileSync('./database/cardInfo.json')).length);
   // console.log(JSON.parse(fs.readFileSync('./database/card_number.json')).existed.length);
   const answers = await inquirer.prompt({

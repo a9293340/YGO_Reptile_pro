@@ -5,12 +5,14 @@ import fs from 'fs';
 import { useBig5_encode, useDelay } from './tools/index.js';
 import gradient from 'gradient-string';
 import { createSpinner } from 'nanospinner';
+import img2base from 'image-to-base64';
 import {
   useReptile2Split,
   useReptileByForm,
   useReptileTargetUrl,
   useReptile2Str,
 } from './reptile/index.js';
+import MongooseCRUD from '../api/MongoDb/Api.js';
 const options = JSON.parse(fs.readFileSync('./database/options.json'));
 const cardInfoObj = {
   number: '',
@@ -25,6 +27,7 @@ const cardInfoObj = {
   id: '',
   effect: '',
   price_info: [],
+  price_yuyu: [],
 };
 const transferRarityArr = [
   {
@@ -312,7 +315,19 @@ export const reptileCardInfo = async file => {
           card_rarity_arr,
           names,
         );
+        // Mongodb
+        for (let i = 0; i < finalData.length; i++) {
+          await MongooseCRUD('C', 'cards', finalData[i]);
+          const number = Number.parseInt(target.number).toString();
+          const image = {
+            number: finalData[i].number,
+            photo: `data:image/jpeg;base64,${await img2base(`./pics/${number}.jpg`)}`,
+          };
+          const arr = await MongooseCRUD('R', 'cards_image', { number: finalData[i].number });
+          if (!arr.length) await MongooseCRUD('C', 'cards_image', image);
 
+          await useDelay(50);
+        }
         final = [...final, ...finalData];
         const text = `Get Card ${chalk.whiteBright.bgGreen(
           ` ${cardInfo.number} - ${cardInfo.name}`,
