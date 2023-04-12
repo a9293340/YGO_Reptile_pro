@@ -6,7 +6,7 @@ import { useErrorMsg } from './api/tools/index.js';
 import figlet from 'figlet';
 import gradient from 'gradient-string';
 import { reptilePrice } from './api/reptilePrice.js';
-import { batchUpload2DB } from './api/update2DB.js';
+import { batchUpload2DB, batchLoadPT } from './api/update2DB.js';
 import schedule from 'node-schedule';
 
 const checkCardNumber = file =>
@@ -113,13 +113,28 @@ const getRutenInfo = async () => {
 };
 
 async function batchUploadCardsInfo() {
-  let target = JSON.parse(fs.readFileSync('./database/cardInfo.json')).slice(0, 3);
+  let target = JSON.parse(fs.readFileSync('./database/cardInfo.json'));
 
   const count = await batchUpload2DB(target);
   console.log(
     chalk.white.bgGreen.bold('Batch upload successful !'),
     `,Success upload : ${count.success} data ,
       Warn(No image) upload : ${count.warn} data, 
+      Failed upload : ${count.error} data`,
+  );
+
+  process.exit();
+}
+
+async function batchUploadProductionType() {
+  let target = JSON.parse(fs.readFileSync('./database/options.json')).product_information_type.map(
+    el => ({ ...el, ...{ status: 0 } }),
+  );
+  // console.log(target);
+  const count = await batchLoadPT(target);
+  console.log(
+    chalk.white.bgGreen.bold('Batch upload successful !'),
+    `,Success upload : ${count.success} data ,
       Failed upload : ${count.error} data`,
   );
 
@@ -155,6 +170,7 @@ async function main() {
       { name: 'Update Cards Information', value: '5' },
       { name: 'Ruten Reptile', value: '4' },
       { name: 'Ruten Reptile(schedule)', value: '3' },
+      { name: 'Update Productions', value: '6' },
     ],
   });
 
@@ -162,6 +178,7 @@ async function main() {
   if (answers.updateOption === '4') getRutenInfo();
   else if (answers.updateOption === '5') batchUploadCardsInfo();
   else if (answers.updateOption === '3') scheduleReptilePrice();
+  else if (answers.updateOption === '6') batchUploadProductionType();
   else
     answers.updateOption === '2'
       ? await getCardInfo()

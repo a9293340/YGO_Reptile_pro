@@ -5,6 +5,26 @@ import { createSpinner } from 'nanospinner';
 import img2base from 'image-to-base64';
 import fs from 'fs';
 
+export const batchLoadPT = async obj => {
+  console.log(gradient.rainbow('Start batch upload cards information to database!'));
+  let count = { success: 0, error: 0 };
+  for (let i = 0; i < obj.length; i++) {
+    let target = JSON.parse(JSON.stringify(obj[i]));
+    const spinner = createSpinner().start({
+      text: `Upload Card Name : ${chalk.whiteBright.bgMagenta(target.name)}`,
+    });
+    try {
+      await MongooseCRUD('C', 'product_information_type', target);
+      spinner.success({ text: target.name + ' Upload success!' }).clear();
+      count.success++;
+    } catch (error) {
+      spinner.error({ text: target.name + ' Upload failed!' }).clear();
+      count.error++;
+    }
+  }
+  return count;
+};
+
 export const batchUpload2DB = async obj => {
   console.log(gradient.rainbow('Start batch upload cards information to database!'));
   let count = { success: 0, warn: 0, error: 0 };
