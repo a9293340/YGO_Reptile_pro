@@ -309,12 +309,12 @@ export const reptilePrice = async () => {
 					'Uo',
 					'cards',
 					{ id: cardInfo[c].id },
-					cardInfo[c]
+					{ price_info: cardInfo[c].price_info }
 				);
 			} catch (error) {
 				upload = false;
 			}
-			await useDelay(5000);
+			await useDelay(50);
 
 			if (!upload)
 				spinner
