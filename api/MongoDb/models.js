@@ -106,6 +106,7 @@ const cards = new mongoose.Schema({
   number: { type: String },
   name: { type: String },
   type: { type: String },
+  race: { type: String },
   star: { type: String },
   attribute: { type: String },
   rarity: { type: Array },

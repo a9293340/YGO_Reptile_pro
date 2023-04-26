@@ -171,9 +171,16 @@ const getPriceYuYu = async (name, rares) => {
 
 export const reptilePrice = async () => {
   console.log(gradient.rainbow('Start Reptile Cards Information'));
-  let cardInfo = await MongooseCRUD('R', 'cards', {});
+  let cardInfo = await MongooseCRUD(
+    'R',
+    'cards',
+    {},
+    {},
+    { id: 1, rarity: 1, price_info: 1, _id: 0 },
+  );
   let errorBox = [];
   const startTime = new Date();
+  // if (true) return;
   // TEMP 23
   for (let c = 0; c < cardInfo.length; c++) {
     if (!c % 100 && c) await useDelay(20000);
@@ -187,7 +194,6 @@ export const reptilePrice = async () => {
     const spinner = createSpinner().start({
       text: `Get Card Number : ${chalk.whiteBright.bgMagenta(number)}  Price Information`,
     });
-
     try {
       for (let r = 0; r < rarity.length; r++) {
         // console.log(rarity);

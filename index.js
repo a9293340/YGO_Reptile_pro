@@ -8,12 +8,9 @@ import gradient from 'gradient-string';
 import { reptilePrice } from './api/reptilePrice.js';
 import { batchUpload2DB, batchLoadPT } from './api/update2DB.js';
 import schedule from 'node-schedule';
+import MongooseCRUD from './api/MongoDb/Api.js';
 
-const checkCardNumber = file =>
-  fs
-    .readdirSync('./pics')
-    .map(el => el.split('.')[0].padStart(8, '0'))
-    .filter(el => file.existed.findIndex(x => x === el) === -1);
+const checkCardNumber = () => fs.readdirSync('./pics').map(el => el.split('.')[0].padStart(8, '0'));
 
 const updatedJson = (newData, file) => {
   // if (!newData.length) return;
@@ -22,9 +19,15 @@ const updatedJson = (newData, file) => {
   return file;
 };
 
+const updateNew = async (newData, file) => {
+  const allData = (await MongooseCRUD('R', 'cards', {}, {}, { number: 1 })).map(el => el.number);
+  file.lastAdd = newData;
+  file.existed = [...allData, ...file.lastAdd];
+  return file;
+};
+
 // './database/card_number.json'
-const checkDataFromYgoProPic = path =>
-  checkCardNumber(JSON.parse(fs.readFileSync('./database/card_number.json')));
+const checkDataFromYgoProPic = () => checkCardNumber();
 const checkDataFromJson = path => JSON.parse(fs.readFileSync(path));
 
 const getOptions = async (updateOption, cb = async () => {}) => {
@@ -73,14 +76,13 @@ const getCardInfo = async () => {
     useErrorMsg('JSON file is not array ! Please check data and retry !');
     return;
   }
-
   let file = JSON.parse(fs.readFileSync('./database/card_number.json'));
   //* 把新增的卡號紀錄在JSON中
-  file = updatedJson(newData, file);
-
+  // file = updatedJson(newData, file);
+  file = await updateNew(newData, file);
+  file.type = fs.readdirSync('./pics')[0].split('.')[1];
   //* 爬蟲
   const getData = await reptileCardInfo(file);
-
   const allData = [
     ...JSON.parse(fs.readFileSync('./database/cardInfo.json').toString()),
     ...getData.final,
