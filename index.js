@@ -52,7 +52,10 @@ const getCardInfo = async () => {
       name: 'useToGetNewData',
       message: 'Which of the following methods do you want to use to update the information?',
       choices: [
-        { name: 'From YcoPro Pic (put pictures in "pic" file)', value: '1' },
+        {
+          name: 'From YcoPro Pic (put pictures in "pic" file)',
+          value: '1',
+        },
         { name: 'From JSON (json must be array !)', value: '2' },
       ],
     },
