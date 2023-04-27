@@ -57,6 +57,9 @@ const MongooseCRUD = (type, modelName, filters, options = {}, projection = {}) =
       // ]
       promise = model.aggregate(filters).exec();
       break;
+    case 'COUNT':
+      promise = model.find(filters, projection, {}).count().exec();
+      break;
   }
 
   return promise;

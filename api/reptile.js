@@ -277,7 +277,6 @@ export const reptileCardInfo = async file => {
           const res = await useReptileTargetUrl(pageUrl);
           const bodyS = iconv.decode(Buffer.from(res), 'Big5');
           const $s = cheerio.load(bodyS);
-
           //! 所有名稱
           names = [
             ...names,
@@ -304,7 +303,6 @@ export const reptileCardInfo = async file => {
             await useDelay(Math.random() * 100);
           }
         }
-
         //! 產品包代號(多)
         card_product_information_type_arr = card_id_arr.map(el => el.split('-')[0]);
 
@@ -350,7 +348,7 @@ export const reptileCardInfo = async file => {
         spinner.success({ text }).clear();
       });
     } catch (error) {
-      console.log(error);
+      console.log(111111, error);
       errorControl(spinner, cardInfo, set, file);
       errorBox.push(cardInfo.number);
     }
