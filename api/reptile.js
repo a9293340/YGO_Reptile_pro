@@ -327,15 +327,15 @@ export const reptileCardInfo = async file => {
             await MongooseCRUD('Uo', 'cards', { id: cards[0].id }, cards[0]);
             spinner.update({ text: 'go go go!' });
           }
-          const number = Number.parseInt(finalData[i].number).toString();
-          const image = {
-            number: finalData[i].number,
-            photo: `data:image/jpeg;base64,${await img2base(`./pics/${number}.${file.type}`)}`,
-          };
-          const arr = await MongooseCRUD('R', 'cards_image', {
-            number: finalData[i].number,
-          });
-          if (!arr.length) await MongooseCRUD('C', 'cards_image', image);
+          // const number = Number.parseInt(finalData[i].number).toString();
+          // const image = {
+          //   number: finalData[i].number,
+          //   photo: `data:image/jpeg;base64,${await img2base(`./pics/${number}.${file.type}`)}`,
+          // };
+          // const arr = await MongooseCRUD('R', 'cards_image', {
+          //   number: finalData[i].number,
+          // });
+          // if (!arr.length) await MongooseCRUD('C', 'cards_image', image);
 
           await useDelay(50);
         }

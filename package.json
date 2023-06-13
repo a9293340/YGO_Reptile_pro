@@ -33,6 +33,7 @@
 		"qs-stringify": "^1.2.1",
 		"readline-sync": "^1.4.10",
 		"request": "^2.88.2",
-		"request-promise": "^4.2.6"
+		"request-promise": "^4.2.6",
+		"webp-converter": "^2.3.3"
 	}
 }

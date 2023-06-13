@@ -174,7 +174,11 @@ export const reptilePrice = async () => {
   let cardInfo = await MongooseCRUD(
     'R',
     'cards',
-    {},
+    {
+      'price_info.time': {
+        $not: new RegExp(dayjs().format('YYYY-MM-DD')),
+      },
+    },
     {},
     { id: 1, rarity: 1, price_info: 1, _id: 0 },
   );
@@ -188,6 +192,9 @@ export const reptilePrice = async () => {
     const rarity = [...new Set(cardInfo[c].rarity)];
     let allPrice = cardInfo[c].price_info;
     let isFalse = 0;
+    if (allPrice.find(el => dayjs().format('YYYY-MM-DD') === dayjs(el.time).format('YYYY-MM-DD')))
+      continue;
+
     //! 銀亮 跳過
     if (rarity.find(el => el === '銀亮')) continue;
     // if (number !== '301-051') continue;
@@ -203,7 +210,7 @@ export const reptilePrice = async () => {
         let price = JSON.parse(JSON.stringify(price_temp));
         price.time = dayjs().format('YYYY-MM-DD HH:mm:ss');
         price.rarity = rar;
-        const rarityWords = rar !== '普卡' ? '+' + rar : '';
+        const rarityWords = rar !== '普卡' && rarity.length > 1 ? '+' + rar : '';
         const errorControls = type => {
           price[`price_${type}`] = null;
           isFalse++;

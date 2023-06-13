@@ -14,6 +14,7 @@ import { useBig5_encode, useDelay } from './api/tools/index.js';
 import MongooseCRUD from './api/MongoDb/Api.js';
 import img2base from 'image-to-base64';
 import { reptileCardInfo } from './api/reptile.js';
+import webp from 'webp-converter';
 
 let box = [];
 let errorBox = [];
@@ -509,4 +510,65 @@ async function main4() {
   }
 }
 
-main6();
+// main6();
+
+async function img2Webp() {
+  let err = [];
+  const trans = str => str.padStart(8, '0');
+  const data = fs.readdirSync('./pics').map(el => el.split('.')[0]);
+  const all = await MongooseCRUD('R', 'cards_image', {}, {}, { photo: 0 });
+  for (let i = 0; i < data.length; i++) {
+    if (!all.find(el => el.number === trans(data[i]))) {
+      await webp.cwebp(`./pics/${data[i]}.jpg`, `./pic2/${data[i]}.webp`, '-q 80');
+      console.log(data[i], '     GooD!');
+    } else {
+      console.log(data[i], '     BaD!');
+    }
+  }
+}
+
+async function ImgToDB() {
+  const data = fs.readdirSync('./pic2').map(el => el.split('.')[0]);
+  // console.log(data);
+  for (let i = 0; i < data.length; i++) {
+    const base64 = `data:image/webp;base64,${fs
+      .readFileSync(`./pic2/${data[i]}.webp`)
+      .toString('base64')}`;
+
+    const number = data[i].padStart(8, '0');
+    await MongooseCRUD('C', 'cards_image', { photo: base64, number });
+    console.log(number, '    Done!');
+    await useDelay(100);
+  }
+}
+
+async function getID() {
+  await useReptileByForm('http://220.134.173.17/gameking/card/ocg_list.asp', {
+    form_data1: 'AC03',
+  }).then(async sus => {
+    const body = iconv.decode(Buffer.from(sus), 'Big5');
+    const $ = cheerio.load(body);
+    const page = $('tr[bgcolor="#C1E0FF"] > td > select').first().children().length;
+    console.log(page);
+    let card_names = [];
+    for (let p = 0; p < page; p++) {
+      const pageUrl = `http://220.134.173.17/gameking/card/ocg_list.asp?call_item=1&call_data=AC03&call_sql=Select%20*%20from%20ocg%20where%20ocg_no%20like%20%27AC03%A2H%27%20order%20by%20ocg_no%20asc&Page=${
+        p + 1
+      }`;
+      const res = await useReptileTargetUrl(pageUrl);
+      const bodyS = iconv.decode(Buffer.from(res), 'Big5');
+      const $s = cheerio.load(bodyS);
+      const namesInfo = useReptile2Split(
+        $s('tr[bgcolor="#E8F4FF"] td[width="08%"][align="center"]'),
+      ).filter(el => el !== '-');
+      card_names = [...card_names, ...namesInfo];
+      console.log(p + 1, 'done');
+    }
+    const result = [...new Set(card_names)];
+
+    console.log(result);
+    fs.writeFileSync('./database/cards_id.json', JSON.stringify(result));
+  });
+}
+
+getID();

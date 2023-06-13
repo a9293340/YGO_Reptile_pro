@@ -82,8 +82,8 @@ const getCardInfo = async () => {
   let file = JSON.parse(fs.readFileSync('./database/card_number.json'));
   //* 把新增的卡號紀錄在JSON中
   // file = updatedJson(newData, file);
-  file = await updateNew(newData, file);
-  file.type = fs.readdirSync('./pics')[0].split('.')[1];
+  // file = await updateNew(newData, file);
+  // file.type = fs.readdirSync('./pics')[0].split('.')[1];
   //* 爬蟲
   const getData = await reptileCardInfo(file);
   const allData = [
@@ -147,7 +147,7 @@ async function batchUploadProductionType() {
 }
 
 async function scheduleReptilePrice() {
-  schedule.scheduleJob('scheduleReptilePrice', '0 0 0 * * *', () => {
+  schedule.scheduleJob('scheduleReptilePrice', '0 0 8 * * *', () => {
     getRutenInfo();
   });
 }
