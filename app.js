@@ -37,7 +37,9 @@ async function scheduleReptilePrice() {
 			whitespaceBreak: true,
 		})
 	);
-	schedule.scheduleJob('scheduleReptilePrice', '0 0 11 * * *', () => {
+	schedule.scheduleJob('scheduleReptilePrice', '0 0 12 * * *', () => {
 		getRutenInfo();
 	});
 }
+
+scheduleReptilePrice();
