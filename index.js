@@ -181,42 +181,42 @@ async function scheduleReptilePrice() {
 	});
 }
 
-async function main() {
-	console.log(
-		figlet.textSync('YGO Reptile!', {
-			font: 'Ghost',
-			horizontalLayout: 'fill',
-			verticalLayout: 'default',
-			width: 140,
-			whitespaceBreak: true,
-		})
-	);
-	// console.log(JSON.parse(fs.readFileSync('./database/cardInfo.json')).length);
-	// console.log(JSON.parse(fs.readFileSync('./database/card_number.json')).existed.length);
-	const answers = await inquirer.prompt({
-		type: 'list',
-		name: 'updateOption',
-		message: 'Please select an update process.',
-		choices: [
-			{ name: 'Options', value: '1' },
-			{ name: 'Card Information', value: '2' },
-			{ name: 'Update Cards Information', value: '5' },
-			{ name: 'Ruten Reptile', value: '4' },
-			{ name: 'Ruten Reptile(schedule)', value: '3' },
-			{ name: 'Update Productions', value: '6' },
-		],
-	});
+// async function main() {
+// 	console.log(
+// 		figlet.textSync('YGO Reptile!', {
+// 			font: 'Ghost',
+// 			horizontalLayout: 'fill',
+// 			verticalLayout: 'default',
+// 			width: 140,
+// 			whitespaceBreak: true,
+// 		})
+// 	);
+// 	// console.log(JSON.parse(fs.readFileSync('./database/cardInfo.json')).length);
+// 	// console.log(JSON.parse(fs.readFileSync('./database/card_number.json')).existed.length);
+// 	const answers = await inquirer.prompt({
+// 		type: 'list',
+// 		name: 'updateOption',
+// 		message: 'Please select an update process.',
+// 		choices: [
+// 			{ name: 'Options', value: '1' },
+// 			{ name: 'Card Information', value: '2' },
+// 			{ name: 'Update Cards Information', value: '5' },
+// 			{ name: 'Ruten Reptile', value: '4' },
+// 			{ name: 'Ruten Reptile(schedule)', value: '3' },
+// 			{ name: 'Update Productions', value: '6' },
+// 		],
+// 	});
 
-	//! go to ruten reptile
-	if (answers.updateOption === '4') getRutenInfo();
-	else if (answers.updateOption === '5') batchUploadCardsInfo();
-	else if (answers.updateOption === '3') scheduleReptilePrice();
-	else if (answers.updateOption === '6') batchUploadProductionType();
-	else
-		answers.updateOption === '2'
-			? await getCardInfo()
-			: await getOptions(answers.updateOption, getCardInfo);
-}
+// 	//! go to ruten reptile
+// 	if (answers.updateOption === '4') getRutenInfo();
+// 	else if (answers.updateOption === '5') batchUploadCardsInfo();
+// 	else if (answers.updateOption === '3') scheduleReptilePrice();
+// 	else if (answers.updateOption === '6') batchUploadProductionType();
+// 	else
+// 		answers.updateOption === '2'
+// 			? await getCardInfo()
+// 			: await getOptions(answers.updateOption, getCardInfo);
+// }
 
 // main();
 scheduleReptilePrice();

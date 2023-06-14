@@ -13,7 +13,7 @@ import {
 	useReptile2Str,
 } from './reptile/index.js';
 import MongooseCRUD from '../api/MongoDb/Api.js';
-// const options = JSON.parse(fs.readFileSync('./database/options.json'));
+const options = JSON.parse(fs.readFileSync('./database/options.json'));
 const cardInfoObj = {
 	number: '',
 	name: '',
