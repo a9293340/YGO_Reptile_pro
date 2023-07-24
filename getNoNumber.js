@@ -750,5 +750,23 @@ async function getCardsByInput() {
 	fs.writeFileSync('./database/temp.json', JSON.stringify(arr));
 }
 
+async function fixCardNumber() {
+	const db = JSON.parse(fs.readFileSync('./database/temp.json'));
+	for (let i = 0; i < db.length; i++) {
+		const info = db[i];
+		if (i) {
+			console.log(info.id);
+			await MongooseCRUD(
+				'Uo',
+				'cards',
+				{ id: info.id },
+				{ number: info.number }
+			);
+		}
+	}
+	console.log('OK');
+}
+
 // img2Webp();
-await getCardsByInput();
+ImgToDB();
+// await fixCardNumber();
