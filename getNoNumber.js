@@ -596,8 +596,11 @@ async function img2Webp() {
 }
 
 async function ImgToDB() {
-	const data = fs.readdirSync('./pic2').map((el) => el.split('.')[0]);
-	// console.log(data);
+	const data = fs
+		.readdirSync('./pic2')
+		.map((el) => el.split('.')[0])
+		.filter((el) => el);
+	console.log(data);
 	for (let i = 0; i < data.length; i++) {
 		const base64 = `data:image/webp;base64,${fs
 			.readFileSync(`./pic2/${data[i]}.webp`)
