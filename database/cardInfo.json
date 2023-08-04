@@ -1,0 +1,26 @@
+[
+	{
+		"_id": "6437546cac8ae56f6aaa2795",
+		"number": "00010000",
+		"name": "萬物創世龍",
+		"type": "龍族",
+		"star": "等級10",
+		"attribute": "闇",
+		"rarity": ["紅鑽"],
+		"atk": null,
+		"def": null,
+		"product_information_type": "IGAS",
+		"effect": "此卡不能通常召喚。\n解放我方場上攻擊力合計和守備力合計的總和為10000以上的怪獸才能特殊召喚。\n以此方法特殊召喚出場的此卡的攻擊力、守備力變為10000。　",
+		"price_info": [
+			{
+				"time": "2023-04-13 14:33:28",
+				"rarity": "紅鑽",
+				"price_lowest": 55555,
+				"price_avg": 62091
+			}
+		],
+		"price_yuyu": [],
+		"id": "IGAS-JP000",
+		"__v": 0
+	}
+]
