@@ -23,7 +23,9 @@ const getRutenInfo = async () => {
 
 	console.log(
 		chalk.white.bgGreen.bold('Updated Data Price Successful !'),
-		`,total updated ${price.cardInfo.length} data`
+		`,total updated ${
+			price.cardInfo.length
+		} data(${new Date().toLocaleDateString()})`
 	);
 };
 
