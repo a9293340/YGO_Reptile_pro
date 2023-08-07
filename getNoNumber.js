@@ -15,6 +15,7 @@ import MongooseCRUD from './api/MongoDb/Api.js';
 import img2base from 'image-to-base64';
 import { reptileCardInfo } from './api/reptile.js';
 import webp from 'webp-converter';
+import { table } from 'console';
 
 let box = [];
 let errorBox = [];
@@ -568,6 +569,28 @@ async function main4() {
 
 // main6();
 
+async function getAllCardsProductType() {
+	const cards = JSON.parse(
+		fs.readFileSync('./database/cards_productType.json')
+	);
+	const productType = cards
+		.map((el) => el.product_information_type)
+		.filter((el) => el)
+		.filter((item, index, arr) => arr.indexOf(item) === index);
+	console.log(productType);
+	const all_db = JSON.parse(
+		fs.readFileSync('./database/productInformation.json')
+	).map((el) => el.packType);
+
+	let arr = [];
+	for (let i = 0; i < productType.length; i++) {
+		const tar = productType[i];
+		if (!all_db.find((el) => el === tar)) arr.push(tar);
+	}
+	console.log(arr);
+	fs.writeFileSync('./database/lose_product_type.json', JSON.stringify(arr));
+}
+
 async function img2Webp() {
 	let err = [];
 	const trans = (str) => str.padStart(8, '0');
@@ -770,6 +793,6 @@ async function fixCardNumber() {
 	console.log('OK');
 }
 
-// img2Webp();
-ImgToDB();
+img2Webp();
+// ImgToDB();
 // await fixCardNumber();
