@@ -516,7 +516,13 @@ async function img2Webp() {
   let err = [];
   const trans = str => str.padStart(8, '0');
   const data = fs.readdirSync('./pics').map(el => el.split('.')[0]);
-  const all = await MongooseCRUD('R', 'cards_image', {}, {}, { photo: 0 });
+  const all = await MongooseCRUD(
+    'R',
+    'cards_image',
+    { number: data.map(el => trans(el)) },
+    {},
+    { photo: 0 },
+  );
   for (let i = 0; i < data.length; i++) {
     if (!all.find(el => el.number === trans(data[i]))) {
       await webp.cwebp(`./pics/${data[i]}.jpg`, `./pic2/${data[i]}.webp`, '-q 80');
@@ -544,7 +550,7 @@ async function ImgToDB() {
 
 async function getID() {
   await useReptileByForm('http://220.134.173.17/gameking/card/ocg_list.asp', {
-    form_data1: 'AC03',
+    form_data1: 'SD46',
   }).then(async sus => {
     const body = iconv.decode(Buffer.from(sus), 'Big5');
     const $ = cheerio.load(body);
@@ -552,7 +558,7 @@ async function getID() {
     console.log(page);
     let card_names = [];
     for (let p = 0; p < page; p++) {
-      const pageUrl = `http://220.134.173.17/gameking/card/ocg_list.asp?call_item=1&call_data=AC03&call_sql=Select%20*%20from%20ocg%20where%20ocg_no%20like%20%27AC03%A2H%27%20order%20by%20ocg_no%20asc&Page=${
+      const pageUrl = `http://220.134.173.17/gameking/card/ocg_list.asp?call_item=1&call_data=SD46&call_sql=Select%20*%20from%20ocg%20where%20ocg_no%20like%20%27AC03%A2H%27%20order%20by%20ocg_no%20asc&Page=${
         p + 1
       }`;
       const res = await useReptileTargetUrl(pageUrl);
@@ -571,4 +577,6 @@ async function getID() {
   });
 }
 
-getID();
+// getID();
+// img2Webp();
+ImgToDB();
