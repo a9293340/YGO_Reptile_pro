@@ -15,6 +15,7 @@ import MongooseCRUD from './api/MongoDb/Api.js';
 import img2base from 'image-to-base64';
 import { reptileCardInfo } from './api/reptile.js';
 import webp from 'webp-converter';
+import { table } from 'console';
 
 let box = [];
 let errorBox = [];
@@ -36,6 +37,30 @@ const cardInfoObj = {
 };
 
 const transferRarityArr = [
+  {
+    from: '普卡',
+    to: '普卡',
+  },
+  {
+    from: '隱普',
+    to: '隱普',
+  },
+  {
+    from: '亮面',
+    to: '亮面',
+  },
+  {
+    from: '金亮',
+    to: '金亮',
+  },
+  {
+    from: '銀字',
+    to: '銀字',
+  },
+  {
+    from: '半鑽',
+    to: '半鑽',
+  },
   {
     from: '紅鑽',
     to: '紅字半鑽',
@@ -512,6 +537,26 @@ async function main4() {
 
 // main6();
 
+async function getAllCardsProductType() {
+  const cards = JSON.parse(fs.readFileSync('./database/cards_productType.json'));
+  const productType = cards
+    .map(el => el.product_information_type)
+    .filter(el => el)
+    .filter((item, index, arr) => arr.indexOf(item) === index);
+  console.log(productType);
+  const all_db = JSON.parse(fs.readFileSync('./database/productInformation.json')).map(
+    el => el.packType,
+  );
+
+  let arr = [];
+  for (let i = 0; i < productType.length; i++) {
+    const tar = productType[i];
+    if (!all_db.find(el => el === tar)) arr.push(tar);
+  }
+  console.log(arr);
+  fs.writeFileSync('./database/lose_product_type.json', JSON.stringify(arr));
+}
+
 async function img2Webp() {
   let err = [];
   const trans = str => str.padStart(8, '0');
@@ -534,8 +579,11 @@ async function img2Webp() {
 }
 
 async function ImgToDB() {
-  const data = fs.readdirSync('./pic2').map(el => el.split('.')[0]);
-  // console.log(data);
+  const data = fs
+    .readdirSync('./pic2')
+    .map(el => el.split('.')[0])
+    .filter(el => el);
+  console.log(data);
   for (let i = 0; i < data.length; i++) {
     const base64 = `data:image/webp;base64,${fs
       .readFileSync(`./pic2/${data[i]}.webp`)
@@ -550,7 +598,7 @@ async function ImgToDB() {
 
 async function getID() {
   await useReptileByForm('http://220.134.173.17/gameking/card/ocg_list.asp', {
-    form_data1: 'SD46',
+    form_data1: 'AGOV',
   }).then(async sus => {
     const body = iconv.decode(Buffer.from(sus), 'Big5');
     const $ = cheerio.load(body);
@@ -558,7 +606,7 @@ async function getID() {
     console.log(page);
     let card_names = [];
     for (let p = 0; p < page; p++) {
-      const pageUrl = `http://220.134.173.17/gameking/card/ocg_list.asp?call_item=1&call_data=SD46&call_sql=Select%20*%20from%20ocg%20where%20ocg_no%20like%20%27AC03%A2H%27%20order%20by%20ocg_no%20asc&Page=${
+      const pageUrl = `http://220.134.173.17/gameking/card/ocg_list.asp?call_item=1&call_data=AGOV&call_sql=Select%20*%20from%20ocg%20where%20ocg_no%20like%20%27AGOV%A2H%27%20order%20by%20ocg_no%20asc&Page=${
         p + 1
       }`;
       const res = await useReptileTargetUrl(pageUrl);
@@ -577,6 +625,124 @@ async function getID() {
   });
 }
 
-// getID();
-// img2Webp();
-ImgToDB();
+async function getCardsByInput() {
+  let arr = [];
+  const getDesc = async rarity => {
+    try {
+      const effect_url = await useReptileTargetUrl(
+        `http://220.134.173.17/gameking/card/ocg_show.asp?call_no=${rarity}&call_item=1`,
+      );
+      const effect_body = iconv.decode(Buffer.from(effect_url), 'Big5');
+      const $x = cheerio.load(effect_body);
+      const desc = $x('tr[bgcolor="#E8F4FF"] td[width="80%"]');
+      let str = '';
+      $x(desc).each((nn, des) => {
+        if (nn) str += $x(des).text();
+      });
+      return str;
+    } catch (e) {}
+  };
+  const makeObj = async (num, info) => {
+    let obj = {};
+    const res = await useReptileByForm('http://220.134.173.17/gameking/card/ocg_list.asp', {
+      form_data1: num,
+    });
+    const body = iconv.decode(Buffer.from(res), 'Big5');
+    const $ = cheerio.load(body);
+    obj.id = num;
+    obj.number = '';
+    obj.price_info = [];
+    obj.price_yuyu = [];
+    obj.product_information_type = info;
+    $('td[width="22%"][align="center"]').each((s, el) => {
+      const txt = $(el).text().trim();
+      if (s === 1) {
+        obj.name = txt;
+        // console.log(txt);
+      }
+    });
+    $('td[width="10%"][align="center"]').each((s, el) => {
+      const txt = $(el).text().trim();
+      if (s === 1) {
+        obj.type = txt;
+        // console.log(txt);
+      }
+      if (s === 2) {
+        obj.race = txt;
+        // console.log(txt);
+      }
+    });
+    $('td[width="06%"][align="center"]').each((s, el) => {
+      const txt = $(el).text().trim();
+      if (s === 1) {
+        obj.star = txt;
+        // console.log(txt);
+      }
+    });
+    obj.rarity = [];
+    $('td[width="05%"][align="center"]').each((s, el) => {
+      const txt = $(el).text().trim();
+      // console.log(txt, s);
+      if (s === 3) {
+        obj.attribute = txt;
+        // console.log(txt);
+      }
+      // console.log(
+      // 	txt,
+      // 	transferRarityArr.findIndex((el) => el.from === txt) !== -1
+      // );
+      if (transferRarityArr.findIndex(el => el.from === txt) !== -1) {
+        obj.rarity.push(RarityTransfer(txt));
+        console.log(obj.rarity);
+      }
+    });
+    $('td[width="07%"][align="center"]').each((s, el) => {
+      const txt = $(el).text().trim();
+      if (s === 3) {
+        obj.atk = parseInt(txt);
+        // console.log(obj.atk);
+      }
+      if (s === 4) {
+        obj.def = parseInt(txt);
+        // console.log(obj.def);
+      }
+    });
+    obj.effect = await getDesc(num);
+    arr.push(obj);
+    console.log(num);
+  };
+  const startGetInfo = async (total, info, hasS) => {
+    for (let i = 0; i < total; i++) {
+      const num = `${info}-JP${i.toString().padStart(3, '0')}`;
+      await makeObj(num, info);
+    }
+
+    if (hasS.bool) {
+      for (let i = 0; i < hasS.number; i++) {
+        const num = `${info}-JPS0${i + 1}`;
+        await makeObj(num, info);
+      }
+    }
+  };
+
+  let total = 80 + 1;
+
+  await startGetInfo(total, 'AGOV', { bool: true, number: 1 });
+  fs.writeFileSync('./database/temp.json', JSON.stringify(arr));
+}
+
+async function fixCardNumber() {
+  const db = JSON.parse(fs.readFileSync('./database/temp.json'));
+  for (let i = 0; i < db.length; i++) {
+    const info = db[i];
+    if (i) {
+      console.log(info.id);
+      await MongooseCRUD('Uo', 'cards', { id: info.id }, { number: info.number });
+    }
+  }
+  console.log('OK');
+}
+
+img2Webp();
+// ImgToDB();
+// await fixCardNumber();
