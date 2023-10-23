@@ -1,113 +1,113 @@
-import axios from 'axios';
-import * as cheerio from 'cheerio';
-import iconv from 'iconv-lite';
-import { useReptileTargetUrl } from './reptile/index.js';
-import gradient from 'gradient-string';
-import { createSpinner } from 'nanospinner';
-import chalk from 'chalk';
-import { useDelay } from './tools/index.js';
-import dayjs from 'dayjs';
-import MongooseCRUD from '../api/MongoDb/Api.js';
+import axios from "axios";
+import * as cheerio from "cheerio";
+import iconv from "iconv-lite";
+import { useReptileTargetUrl } from "./reptile/index.js";
+import gradient from "gradient-string";
+import { createSpinner } from "nanospinner";
+import chalk from "chalk";
+import { useDelay } from "./tools/index.js";
+import dayjs from "dayjs";
+import MongooseCRUD from "../api/MongoDb/Api.js";
 
 const price_temp = {
 	time: null,
-	rarity: '',
+	rarity: "",
 	price_lowest: 0,
 	price_avg: 0,
 };
 
 const transfer = [
 	{
-		from: ['N'],
-		to: ['普卡', '點鑽', '碎鑽', '方鑽'],
+		from: ["N"],
+		to: ["普卡", "點鑽", "碎鑽", "方鑽"],
 	},
 	{
-		from: ['R'],
-		to: ['銀字', '銀字點鑽', '銀字碎鑽', '銀字方鑽'],
+		from: ["R"],
+		to: ["銀字", "銀字點鑽", "銀字碎鑽", "銀字方鑽"],
 	},
 	{
-		from: ['NR'],
-		to: ['隱普'],
+		from: ["NR"],
+		to: ["隱普"],
 	},
 	{
-		from: ['SR'],
-		to: ['亮面', '亮面點鑽', '亮面碎鑽', '亮面方鑽'],
+		from: ["SR"],
+		to: ["亮面", "亮面點鑽", "亮面碎鑽", "亮面方鑽"],
 	},
 	{
-		from: ['UL'],
-		to: ['金普'],
+		from: ["UL"],
+		to: ["金普"],
 	},
 	{
-		from: ['UR'],
-		to: ['金亮', '紅亮', '藍亮', '金亮點鑽', '金亮碎鑽', '金亮方鑽'],
+		from: ["UR"],
+		to: ["金亮", "紅亮", "藍亮", "金亮點鑽", "金亮碎鑽", "金亮方鑽"],
 	},
 	{
-		from: ['SE', 'GSE'],
+		from: ["SE", "GSE"],
 		to: [
-			'半鑽',
-			'紅字半鑽',
-			'藍鑽',
-			'半鑽點鑽',
-			'半鑽碎鑽',
-			'半鑽方鑽',
-			'斜鑽',
+			"半鑽",
+			"紅字半鑽",
+			"藍鑽",
+			"半鑽點鑽",
+			"半鑽碎鑽",
+			"半鑽方鑽",
+			"斜鑽",
 		],
 	},
 	{
-		from: ['EXSE', 'P-EXSE'],
-		to: ['斜鑽'],
+		from: ["EXSE", "P-EXSE"],
+		to: ["斜鑽"],
 	},
 	{
-		from: ['P-R'],
-		to: ['銀鑽'],
+		from: ["P-R"],
+		to: ["銀鑽"],
 	},
 	{
-		from: ['PSE'],
-		to: ['白鑽'],
+		from: ["PSE"],
+		to: ["白鑽"],
 	},
 	{
-		from: ['P-UR'],
-		to: ['全鑽'],
+		from: ["P-UR"],
+		to: ["全鑽"],
 	},
 	{
-		from: ['CR'],
-		to: ['雕鑽'],
+		from: ["CR"],
+		to: ["雕鑽"],
 	},
 	{
-		from: ['UL'],
-		to: ['浮雕'],
+		from: ["UL"],
+		to: ["浮雕"],
 	},
 	{
-		from: ['HR', 'P-HR'],
-		to: ['雷射'],
+		from: ["HR", "P-HR"],
+		to: ["雷射"],
 	},
 	{
-		from: ['GR'],
-		to: ['黃金'],
+		from: ["GR"],
+		to: ["黃金"],
 	},
 	{
-		from: ['20thSE', '10000SE'],
-		to: ['紅鑽'],
+		from: ["20thSE", "10000SE"],
+		to: ["紅鑽"],
 	},
 	{
-		from: ['QCSE'],
-		to: ['金鑽'],
+		from: ["QCSE"],
+		to: ["金鑽"],
 	},
 	{
-		from: ['KC-UR'],
-		to: ['KC紋'],
+		from: ["KC-UR"],
+		to: ["KC紋"],
 	},
 	{
-		from: ['M', 'M-SR', 'M-UR', 'M-GR', 'M-SE'],
-		to: ['古文鑽'],
+		from: ["M", "M-SR", "M-UR", "M-GR", "M-SE"],
+		to: ["古文鑽"],
 	},
 	{
-		from: ['P-N', 'P-SR', 'P-UR'],
-		to: ['普鑽', '粉鑽', '亮面彩鑽', '金亮彩鑽', '半鑽彩鑽', '碎鑽'],
+		from: ["P-N", "P-SR", "P-UR"],
+		to: ["普鑽", "粉鑽", "亮面彩鑽", "金亮彩鑽", "半鑽彩鑽", "碎鑽"],
 	},
 	{
-		from: ['KC-R'],
-		to: ['銀字KC紋'],
+		from: ["KC-R"],
+		to: ["銀字KC紋"],
 	},
 ];
 
@@ -118,24 +118,17 @@ const count_low_1 = (prices) =>
 		prices
 			.slice(0, Math.round(prices.length / (prices.length > 4 ? 4 : 1)))
 			.reduce((a, b) => a + b) /
-			prices.slice(
-				0,
-				Math.round(prices.length / (prices.length > 4 ? 4 : 1))
-			).length
+			prices.slice(0, Math.round(prices.length / (prices.length > 4 ? 4 : 1)))
+				.length
 	);
 
 const count_low_2 = (prices) =>
 	Math.round(
 		(prices
-			.slice(
-				Math.round(prices.length * 0.1),
-				Math.round(prices.length * 0.4)
-			)
+			.slice(Math.round(prices.length * 0.1), Math.round(prices.length * 0.4))
 			.reduce((a, b) => a + b) /
 			Math.round(
-				Math.round(prices.length * 0.4) -
-					Math.round(prices.length * 0.1) +
-					1
+				Math.round(prices.length * 0.4) - Math.round(prices.length * 0.1) + 1
 			)) *
 			0.8
 	);
@@ -144,14 +137,13 @@ const getPriceYuYu = async (name, rares) => {
 	let targetPrice = 0;
 	await useDelay(Math.random() * 1000);
 	try {
-		const URL =
-			'https://yuyu-tei.jp/game_ygo/sell/sell_price.php?name=' + name;
+		const URL = "https://yuyu-tei.jp/game_ygo/sell/sell_price.php?name=" + name;
 		const url = await useReptileTargetUrl(URL);
-		const body = iconv.decode(Buffer.from(url), 'UTF-8');
+		const body = iconv.decode(Buffer.from(url), "UTF-8");
 		const $ = cheerio.load(body);
 		const checkRares =
-			rares.indexOf('異圖') !== -1 ? rares.split('-')[1] : rares;
-		const isDiff = rares.indexOf('異圖') !== -1;
+			rares.indexOf("異圖") !== -1 ? rares.split("-")[1] : rares;
+		const isDiff = rares.indexOf("異圖") !== -1;
 		const checkRare = (from, to) =>
 			transfer.findIndex(
 				(el) =>
@@ -162,16 +154,16 @@ const getPriceYuYu = async (name, rares) => {
 		const str2Int = (tar) =>
 			tar
 				.text()
-				.replace(/[^\d.-]/g, ' ')
-				.split(' ')
+				.replace(/[^\d.-]/g, " ")
+				.split(" ")
 				.filter((el) => el)
 				.map((el) => parseInt(el));
 		const checkDiff = (imgArr) =>
 			isDiff
-				? imgArr.findIndex((x) => x.indexOf('違い版') !== -1)
-				: imgArr.findIndex((x) => x.indexOf('違い版') === -1);
+				? imgArr.findIndex((x) => x.indexOf("違い版") !== -1)
+				: imgArr.findIndex((x) => x.indexOf("違い版") === -1);
 
-		$('.gr_color').each((n, color) => {
+		$(".gr_color").each((n, color) => {
 			if (checkRare($(color).text(), checkRares)) {
 				let imgArr = [];
 				const priceWords = $(
@@ -182,13 +174,11 @@ const getPriceYuYu = async (name, rares) => {
 				const targetArr = str2Int(priceWords);
 				$(`.card_unit.rarity_${$(color).text()} > .image_box`).each(
 					(ss, set) => {
-						imgArr.push($(set).children('p.name').text());
+						imgArr.push($(set).children("p.name").text());
 					}
 				);
 				targetPrice =
-					targetArr.length === 1
-						? targetArr[0]
-						: targetArr[checkDiff(imgArr)];
+					targetArr.length === 1 ? targetArr[0] : targetArr[checkDiff(imgArr)];
 			}
 		});
 	} catch (e) {
@@ -199,13 +189,13 @@ const getPriceYuYu = async (name, rares) => {
 };
 
 export const reptilePrice = async () => {
-	console.log(gradient.rainbow('Start Reptile Cards Information'));
+	console.log(gradient.rainbow("Start Reptile Cards Information"));
 	let cardInfo = await MongooseCRUD(
-		'R',
-		'cards',
+		"R",
+		"cards",
 		{
-			'price_info.time': {
-				$not: new RegExp(dayjs().format('YYYY-MM-DD')),
+			"price_info.time": {
+				$not: new RegExp(dayjs().format("YYYY-MM-DD")),
 			},
 		},
 		{},
@@ -224,14 +214,13 @@ export const reptilePrice = async () => {
 		if (
 			allPrice.find(
 				(el) =>
-					dayjs().format('YYYY-MM-DD') ===
-					dayjs(el.time).format('YYYY-MM-DD')
+					dayjs().format("YYYY-MM-DD") === dayjs(el.time).format("YYYY-MM-DD")
 			)
 		)
 			continue;
 
 		//! 銀亮 跳過
-		if (rarity.find((el) => el === '銀亮')) continue;
+		if (rarity.find((el) => el === "銀亮")) continue;
 		// if (number !== '301-051') continue;
 		const spinner = createSpinner().start({
 			text: `Get Card Number : ${chalk.whiteBright.bgMagenta(
@@ -245,10 +234,9 @@ export const reptilePrice = async () => {
 				isFalse = 0;
 				const rar = rarity[r];
 				let price = JSON.parse(JSON.stringify(price_temp));
-				price.time = dayjs().format('YYYY-MM-DD HH:mm:ss');
+				price.time = dayjs().format("YYYY-MM-DD HH:mm:ss");
 				price.rarity = rar;
-				const rarityWords =
-					rar !== '普卡' && rarity.length > 1 ? '+' + rar : '';
+				const rarityWords = rar !== "普卡" ? "+" + rar : "";
 				const errorControls = (type) => {
 					price[`price_${type}`] = null;
 					isFalse++;
@@ -259,18 +247,18 @@ export const reptilePrice = async () => {
 				);
 				if (targets.length) {
 					const searchPriceURL = `http://rtapi.ruten.com.tw/api/prod/v2/index.php/prod?id=${targets.join(
-						','
+						","
 					)}`;
 					let prices = (await axios.get(searchPriceURL)).data
-						.filter((el) => el.Currency === 'TWD')
+						.filter((el) => el.Currency === "TWD")
 						.filter((el) => el.StockQty > el.SoldQty)
 						.map((el) => el.PriceRange[1])
 						.filter((el) => Number.isInteger(el))
 						.filter((el) => el < 150000);
 					if (prices.length <= 3) {
 						if (!prices.length) {
-							errorControls('avg');
-							errorControls('lowest');
+							errorControls("avg");
+							errorControls("lowest");
 						} else {
 							price.price_avg = Math.round(
 								prices.reduce((a, b) => a + b) / prices.length
@@ -286,24 +274,17 @@ export const reptilePrice = async () => {
 					//! avg
 					try {
 						prices = outlierDetector(prices);
-						if (
-							prices.reduce((a, b) => a + b) / prices.length >
-							1000
-						)
+						if (prices.reduce((a, b) => a + b) / prices.length > 1000)
 							prices = outlierDetector(prices);
-						price.price_avg = Math.round(
-							weight_function(prices, 'low')
-						);
-						price.price_lowest = Math.round(
-							weight_function(prices, 'lowest')
-						);
+						price.price_avg = Math.round(weight_function(prices, "low"));
+						price.price_lowest = Math.round(weight_function(prices, "lowest"));
 					} catch (e) {
-						errorControls('avg');
-						errorControls('lowest');
+						errorControls("avg");
+						errorControls("lowest");
 					}
 				} else {
-					errorControls('avg');
-					errorControls('lowest');
+					errorControls("avg");
+					errorControls("lowest");
 				}
 
 				if (isFalse < 2) allPrice.push(price);
@@ -318,7 +299,7 @@ export const reptilePrice = async () => {
 			const successWords = allPrice
 				.slice(allPrice.length - rarity.length, allPrice.length)
 				.map((el) => `${el.rarity}-${el.price_lowest}-${el.price_avg}`)
-				.join(' / ');
+				.join(" / ");
 			const totalSpendTime = `Total Spend ${chalk.bgGray(
 				(new Date() - startTime) / 1000
 			)} sec`;
@@ -326,8 +307,8 @@ export const reptilePrice = async () => {
 			// Mongodb
 			let tar = (
 				await MongooseCRUD(
-					'R',
-					'cards',
+					"R",
+					"cards",
 					{ id: cardInfo[c].id },
 					{ price_info: 1, id: 1 }
 				)
@@ -336,8 +317,8 @@ export const reptilePrice = async () => {
 			let upload = true;
 			try {
 				await MongooseCRUD(
-					'Uo',
-					'cards',
+					"Uo",
+					"cards",
 					{ id: cardInfo[c].id },
 					{ price_info: tar.price_info }
 				);
@@ -364,10 +345,7 @@ export const reptilePrice = async () => {
 									c + 1
 								}/${cardInfo.length}] ${chalk.blue(
 									` ${
-										parseInt(
-											((c + 1) / cardInfo.length) *
-												1000000
-										) / 10000
+										parseInt(((c + 1) / cardInfo.length) * 1000000) / 10000
 									}% `
 								)} ${totalSpendTime} `,
 							})
@@ -376,14 +354,9 @@ export const reptilePrice = async () => {
 							.error({
 								text: `Card Number : ${chalk.white.bgRed(
 									`${number} can not reptile price!`
-								)} Current progress [${c + 1}/${
-									cardInfo.length
-								}] ${chalk.blue(
+								)} Current progress [${c + 1}/${cardInfo.length}] ${chalk.blue(
 									` ${
-										parseInt(
-											((c + 1) / cardInfo.length) *
-												1000000
-										) / 10000
+										parseInt(((c + 1) / cardInfo.length) * 1000000) / 10000
 									}% `
 								)} ${totalSpendTime}`,
 							})
@@ -393,13 +366,8 @@ export const reptilePrice = async () => {
 				.error({
 					text: `Card Number : ${chalk.white.bgCyanBright(
 						`${number} upload Failed!`
-					)} Current progress [${c + 1}/${
-						cardInfo.length
-					}] ${chalk.blue(
-						` ${
-							parseInt(((c + 1) / cardInfo.length) * 1000000) /
-							10000
-						}% `
+					)} Current progress [${c + 1}/${cardInfo.length}] ${chalk.blue(
+						` ${parseInt(((c + 1) / cardInfo.length) * 1000000) / 10000}% `
 					)} ${totalSpendTime}`,
 				})
 				.clear();
@@ -435,7 +403,7 @@ const weight_function = (prices, type) => {
 		  prices.filter((el) => el <= (q1 + q3) / 2).length;
 	low = low < lowest ? lowest : low;
 
-	return type === 'low' ? low : lowest;
+	return type === "low" ? low : lowest;
 };
 
 const outlierDetector = (collection) => {
@@ -453,9 +421,7 @@ const outlierDetector = (collection) => {
 	// console.log(q1, maxValue, minValue);
 	return q1 === q3
 		? sortedCollection
-		: sortedCollection.filter(
-				(value) => value < maxValue && value >= minValue
-		  );
+		: sortedCollection.filter((value) => value < maxValue && value >= minValue);
 };
 
 const q3Detector = (collection) => {

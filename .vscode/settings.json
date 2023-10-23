@@ -1,3 +1,11 @@
 {
-  "cSpell.words": ["bgcolor", "EXSE", "nanospinner", "QCSE", "Ruten", "yuyu"]
+  "cSpell.words": [
+    "bgcolor",
+    "EXSE",
+    "nanospinner",
+    "QCSE",
+    "Ruten",
+    "yuyu"
+  ],
+  "nuxt.isNuxtApp": false
 }
