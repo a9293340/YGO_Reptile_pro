@@ -191,6 +191,7 @@ export const reptilePrice = async () => {
     { id: 1, rarity: 1, _id: 0 },
   );
   let errorBox = [];
+  let failedIds = [];
   const startTime = new Date();
   // if (true) return;
   // TEMP 23
@@ -219,7 +220,8 @@ export const reptilePrice = async () => {
         let price = JSON.parse(JSON.stringify(price_temp));
         price.time = dayjs().format('YYYY-MM-DD HH:mm:ss');
         price.rarity = rar;
-        const rarityWords = rar !== '普卡' && rarity.length > 1 ? '+' + rar : '';
+        let rarityWords = rar !== '普卡' && rarity.length > 1 ? '+' + rar : '';
+        rarityWords = rar.indexOf('異圖') !== -1 ? '+' + rar.replace('-', '+') : rar;
         const errorControls = type => {
           price[`price_${type}`] = null;
           isFalse++;
@@ -254,7 +256,11 @@ export const reptilePrice = async () => {
             // 卡號相同
             .filter(el => el.ProdName.indexOf(number) !== -1)
             // 稀有度相同
-            .filter(el => el.ProdName.indexOf(rar) !== -1)
+            .filter(el =>
+              rar !== '普卡'
+                ? el.ProdName.indexOf(rar.indexOf('異圖') !== -1 ? rar.split('-')[1] : rar) !== -1
+                : el,
+            )
             .map(el => el.PriceRange[1])
             .filter(el => Number.isInteger(el))
             .filter(el => el < 100000);
@@ -266,29 +272,9 @@ export const reptilePrice = async () => {
             errorControls('avg');
             errorControls('lowest');
           }
-          if (prices.length <= 3) {
-            if (!prices.length) {
-              errorControls('avg');
-              errorControls('lowest');
-            } else {
-              price.price_avg = Math.round(prices.reduce((a, b) => a + b) / prices.length);
-              price.price_lowest = Math.round(prices.reduce((a, b) => a + b) / prices.length);
-            }
-            if (isFalse < 2) allPrice.push(price);
-            break;
-          }
 
-          // //! avg
-          // try {
-          //   prices = outlierDetector(prices);
-          //   if (prices.reduce((a, b) => a + b) / prices.length > 1000)
-          //     prices = outlierDetector(prices);
-          //   price.price_avg = Math.round(weight_function(prices, 'low'));
-          //   price.price_lowest = Math.round(weight_function(prices, 'lowest'));
-          // } catch (e) {
-          //   errorControls('avg');
-          //   errorControls('lowest');
-          // }
+          if (!Number.isInteger(price.price_avg)) errorControls('avg');
+          if (!Number.isInteger(price.price_lowest)) errorControls('lowest');
         } else {
           errorControls('avg');
           errorControls('lowest');
@@ -347,13 +333,14 @@ export const reptilePrice = async () => {
       }
       await useDelay(100);
 
-      if (!upload)
+      if (!upload) {
         spinner
           .error({
             text: `Card Number : ${chalk.white.bgRed(`${number} upload failed!`)}`,
           })
           .clear();
-      else
+        failedIds.push(number);
+      } else
         isFalse < 2
           ? spinner
               .success({
@@ -395,6 +382,7 @@ export const reptilePrice = async () => {
   return {
     cardInfo,
     errorBox,
+    failedIds,
   };
 };
 
