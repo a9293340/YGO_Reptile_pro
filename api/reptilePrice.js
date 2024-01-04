@@ -153,6 +153,12 @@ const getPriceYuYu = async (name, rares) => {
 };
 
 function calculatePrices(prices) {
+  // 檢查原始陣列長度
+  if (prices.length < 4) {
+    const minPrice = Math.min(...prices);
+    // 長度小於4時，最小值和最小平均值相等
+    return { minPrice, averagePrice: minPrice };
+  }
   const filteredPrices = removeOutliersIQR(prices).sort((a, b) => a - b);
   const minPrice = Math.min(...filteredPrices);
   let averagePrice;
@@ -254,13 +260,15 @@ export const reptilePrice = async () => {
             // 非未拆包
             .filter(el => el.ProdName.indexOf('未拆包') === -1)
             // 卡號相同
-            .filter(el => el.ProdName.indexOf(number) !== -1)
+            .filter(el => el.ProdName.indexOf(number) !== -1);
+          if (rarity.length > 1)
             // 稀有度相同
-            .filter(el =>
+            prices = prices.filter(el =>
               rar !== '普卡'
                 ? el.ProdName.indexOf(rar.indexOf('異圖') !== -1 ? rar.split('-')[1] : rar) !== -1
                 : el,
-            )
+            );
+          prices = prices
             .map(el => el.PriceRange[1])
             .filter(el => Number.isInteger(el))
             .filter(el => el < 100000);
@@ -284,7 +292,7 @@ export const reptilePrice = async () => {
       }
     } catch (e) {
       // console.log(e);
-      isFalse = 2;
+      // isFalse = 2;
     }
     const totalSpendTime = `Total Spend ${chalk.bgGray((new Date() - startTime) / 1000)} sec`;
     try {
@@ -326,12 +334,14 @@ export const reptilePrice = async () => {
 
       tar.price_info = [...tar.price_info, ...allPrice];
       let upload = true;
-      try {
-        await MongooseCRUD('Uo', 'cards', { id: cardInfo[c].id }, { price_info: tar.price_info });
-      } catch (error) {
-        upload = false;
-      }
-      await useDelay(100);
+      if (allPrice.length > 0) {
+        try {
+          await MongooseCRUD('Uo', 'cards', { id: cardInfo[c].id }, { price_info: tar.price_info });
+        } catch (error) {
+          upload = false;
+        }
+        await useDelay(100);
+      } else upload = false;
 
       if (!upload) {
         spinner
@@ -341,7 +351,7 @@ export const reptilePrice = async () => {
           .clear();
         failedIds.push(number);
       } else
-        isFalse < 2
+        allPrice.length > 0
           ? spinner
               .success({
                 text: `Get Card ${chalk.whiteBright.bgGreen(
