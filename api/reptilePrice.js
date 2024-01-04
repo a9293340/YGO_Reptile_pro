@@ -195,7 +195,7 @@ export const reptilePrice = async () => {
   // if (true) return;
   // TEMP 23
   for (let c = 0; c < cardInfo.length; c++) {
-    if (c !== 0) return;
+    // if (c !== 0) return;
     if (!c % 100 && c) await useDelay(5000);
     const number = cardInfo[c].id;
     const rarity = [...new Set(cardInfo[c].rarity)];
@@ -248,11 +248,13 @@ export const reptilePrice = async () => {
             .filter(el => el.ProdName.indexOf('全新未拆') === -1)
             .filter(el => el.ProdName.indexOf('參考') === -1)
             // 非搜尋
-            .filter(el => el.ProdName.indexOf('搜') === -1)
+            // .filter(el => el.ProdName.indexOf('搜') === -1)
             // 非未拆包
             .filter(el => el.ProdName.indexOf('未拆包') === -1)
             // 卡號相同
             .filter(el => el.ProdName.indexOf(number) !== -1)
+            // 稀有度相同
+            .filter(el => el.ProdName.indexOf(rar) !== -1)
             .map(el => el.PriceRange[1])
             .filter(el => Number.isInteger(el))
             .filter(el => el < 100000);
@@ -298,6 +300,7 @@ export const reptilePrice = async () => {
       // console.log(e);
       isFalse = 2;
     }
+    const totalSpendTime = `Total Spend ${chalk.bgGray((new Date() - startTime) / 1000)} sec`;
     try {
       cardInfo[c].price_info = allPrice;
       // console.log(cardInfo[c]);
@@ -305,7 +308,6 @@ export const reptilePrice = async () => {
         .slice(allPrice.length - rarity.length, allPrice.length)
         .map(el => `${el.rarity}-${el.price_lowest}-${el.price_avg}`)
         .join(' / ');
-      const totalSpendTime = `Total Spend ${chalk.bgGray((new Date() - startTime) / 1000)} sec`;
 
       // Mongodb
       let tar = (
@@ -343,7 +345,7 @@ export const reptilePrice = async () => {
       } catch (error) {
         upload = false;
       }
-      await useDelay(50);
+      await useDelay(100);
 
       if (!upload)
         spinner
