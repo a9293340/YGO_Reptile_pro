@@ -1,7 +1,4 @@
 import axios from "axios";
-import * as cheerio from "cheerio";
-import iconv from "iconv-lite";
-import { useReptileTargetUrl } from "./reptile/index.js";
 import gradient from "gradient-string";
 import { createSpinner } from "nanospinner";
 import chalk from "chalk";
