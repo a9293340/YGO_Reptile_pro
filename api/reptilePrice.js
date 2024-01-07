@@ -145,8 +145,10 @@ export const reptilePrice = async () => {
   // TEMP 23
   for (let c = 0; c < cardInfo.length; c++) {
     // if (c !== 0) return;
-    if (!c % 100 && c) await useDelay(5000);
+    if (!(c % 200) && c) await useDelay(1000);
     const number = cardInfo[c].id;
+    let searchName =
+      number.indexOf(' ') === -1 ? number : number.split(' ')[0] + '+' + number.split(' ')[1];
     const rarity = [...new Set(cardInfo[c].rarity)];
     let allPrice = [];
     let isFalse = 0;
@@ -162,7 +164,7 @@ export const reptilePrice = async () => {
 
     try {
       for (let r = 0; r < rarity.length; r++) {
-        await useDelay(500);
+        await useDelay(100);
         isFalse = 0;
         const rar = rarity[r];
         let price = JSON.parse(JSON.stringify(price_temp));
@@ -174,7 +176,8 @@ export const reptilePrice = async () => {
           price[`price_${type}`] = null;
           isFalse++;
         };
-        const searchURL = `http://rtapi.ruten.com.tw/api/search/v3/index.php/core/prod?q=${number}${rarityWords}&type=direct&sort=prc%2Fac&offset=1&limit=100`;
+        // console.log(searchName);
+        const searchURL = `http://rtapi.ruten.com.tw/api/search/v3/index.php/core/prod?q=${searchName}${rarityWords}&type=direct&sort=prc%2Fac&offset=1&limit=100`;
         const targets = (await axios.get(searchURL)).data.Rows.map(el => el.Id);
         if (targets.length) {
           const searchPriceURL = `http://rtapi.ruten.com.tw/api/prod/v2/index.php/prod?id=${targets.join(
@@ -186,7 +189,7 @@ export const reptilePrice = async () => {
             // 有庫存
             .filter(el => el.StockQty > el.SoldQty)
             // 卡號正確
-            .filter(el => el.ProdName.indexOf(number) !== -1)
+            // .filter(el => el.ProdName.indexOf(number) !== -1)
             // 非同人卡
             .filter(el => el.ProdName.indexOf('同人') === -1)
             .filter(el => el.ProdName.indexOf('DIY') === -1)
@@ -200,9 +203,10 @@ export const reptilePrice = async () => {
             // 非搜尋
             // .filter(el => el.ProdName.indexOf('搜') === -1)
             // 非未拆包
-            .filter(el => el.ProdName.indexOf('未拆包') === -1)
-            // 卡號相同
-            .filter(el => el.ProdName.indexOf(number) !== -1);
+            .filter(el => el.ProdName.indexOf('未拆包') === -1);
+
+          if (number.indexOf(' ') === -1)
+            prices = prices.filter(el => el.ProdName.indexOf(number) !== -1);
           // console.log(prices);
           if (rarity.length > 1)
             // 稀有度相同
@@ -221,8 +225,10 @@ export const reptilePrice = async () => {
             errorControls('lowest');
           }
 
-          if (!Number.isInteger(price.price_avg)) errorControls('avg');
-          if (!Number.isInteger(price.price_lowest)) errorControls('lowest');
+          if (!Number.isInteger(price.price_avg) && price.price_avg === Infinity)
+            errorControls('avg');
+          if (!Number.isInteger(price.price_lowest) && price.price_lowest === Infinity)
+            errorControls('lowest');
         } else {
           errorControls('avg');
           errorControls('lowest');
@@ -253,6 +259,7 @@ export const reptilePrice = async () => {
         for (let i = 0; i < rarity.length; i++) {
           const rar = rarity[i];
           let prices = allPrice.filter(el => el.rarity === rar)[0];
+          if (!prices) continue;
           const tar_prices = tar.price_info.filter(el => el.rarity === rar);
           const avg_low = Math.floor(
             tar_prices
@@ -287,7 +294,7 @@ export const reptilePrice = async () => {
       if (!upload) {
         spinner
           .error({
-            text: `Card Number : ${chalk.white.bgRed(`${number} upload failed!`)}`,
+            text: `Card Number : ${chalk.white.bgRed(`${number} no price information!`)}`,
           })
           .clear();
         failedIds.push(number);
@@ -314,6 +321,7 @@ export const reptilePrice = async () => {
               })
               .clear();
     } catch (error) {
+      // console.log(error);
       spinner
         .error({
           text: `Card Number : ${chalk.white.bgCyanBright(
@@ -326,6 +334,7 @@ export const reptilePrice = async () => {
       errorBox.push({
         number: cardInfo[c].number,
       });
+      failedIds.push(number);
     }
   }
 

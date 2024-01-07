@@ -8,12 +8,26 @@ import nodemailer from 'nodemailer';
 import path from 'path';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { google } from 'googleapis';
 dotenv.config();
 
 const getRutenInfo = async () => {
-  console.log(gradient.rainbow('========  Reptile YGO Cards Price ========'));
-  let price, html;
+  const sendStartLine = async message => {
+    const token = process.env.LINENOTIFY; // 將此替換為您的 LINE Notify 權杖
+    const url = 'https://notify-api.line.me/api/notify';
+
+    await axios.post(url, `message=${message}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+  };
   let now = new Date().toLocaleDateString();
+  await sendStartLine(`${now} 開始爬蟲!`);
+  console.log(gradient.rainbow('========  Reptile YGO Cards Price ========'));
+
+  let price, html;
   let errorMsg = '';
   try {
     price = await reptilePrice();
@@ -69,7 +83,7 @@ const getRutenInfo = async () => {
     });
   };
 
-  const sendLineNotification = message => {
+  const sendLineNotification = async message => {
     // google drive
     const CLIENT_ID = process.env.CLIENT_ID;
     const CLIENT_SECRET = process.env.CLIENT_SECRET;
@@ -98,11 +112,11 @@ const getRutenInfo = async () => {
         });
         console.log(res.data);
       } catch (error) {
-        errorMsg = error;
+        errorMsg = `${error}`;
       }
     };
 
-    uploadFile();
+    await uploadFile();
 
     // line notify
     const token = process.env.LINENOTIFY; // 將此替換為您的 LINE Notify 權杖
@@ -128,9 +142,9 @@ const getRutenInfo = async () => {
 
   sendLineNotification(
     `${now} - 卡價爬蟲完畢!(${
-      errorMsg
+      !errorMsg
         ? '檔案以上傳至連結 : https://drive.google.com/drive/u/0/folders/1Ci_nD7E258zv0Cjd8M90I44HEoOFWJcl'
-        : '上傳檔案失敗!'
+        : errorMsg
     })`,
   );
 };
@@ -145,7 +159,7 @@ async function scheduleReptilePrice() {
       whitespaceBreak: true,
     }),
   );
-  schedule.scheduleJob('scheduleReptilePrice', '10 39 19 * * *', () => {
+  schedule.scheduleJob('scheduleReptilePrice', '01 00 00 * * *', () => {
     getRutenInfo();
   });
 }

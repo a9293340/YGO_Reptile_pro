@@ -1,40 +1,17 @@
-import { google } from 'googleapis';
-import fs from 'fs';
-import dotenv from 'dotenv';
-dotenv.config();
+import MongooseCRUD from './api/MongoDb/Api.js';
+import { reptilePrice } from './api/reptilePrice.js';
 
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI;
-const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
+// const main = async () => {
+//   let cardInfo = await MongooseCRUD('R', 'cards', {
+//     id: 'QCDB-JP048',
+//   });
 
-const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+//   for (let i = 0; i < cardInfo.length; i++) {
+//     await MongooseCRUD('Uo', 'cards', { id: cardInfo[i].id }, { price_info: [] });
+//     console.log(cardInfo[i].id);
+//   }
+// };
 
-oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+// main();
 
-const drive = google.drive({
-  version: 'v3',
-  auth: oauth2Client,
-});
-
-const uploadFile = async () => {
-  try {
-    const res = await drive.files.create({
-      requestBody: {
-        name: 'test.json',
-        mimeType: 'application/json',
-        parents: ['1Ci_nD7E258zv0Cjd8M90I44HEoOFWJcl'],
-      },
-      media: {
-        mimeType: 'application/json',
-        body: fs.createReadStream('./package.json'),
-      },
-    });
-
-    console.log(res.data);
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-uploadFile();
+reptilePrice();
