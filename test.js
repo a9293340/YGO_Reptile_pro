@@ -7,22 +7,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const main = async () => {
-	let cardInfo = await MongooseCRUD("R", "cards", {
-		id: new RegExp(`.*${"TW01-"}.*$`),
-	});
+	let cardInfo = await MongooseCRUD("R", "cards", { id: { $exists: false } });
 
-	for (let i = 0; i < cardInfo.length; i++) {
-		await MongooseCRUD(
-			"Uo",
-			"cards",
-			{ id: cardInfo[i].id },
-			{ price_info: [] }
-		);
-		// const list = cardInfo[i].price_info.filter(
-		// 	(el) => el.price_avg > 9999 || el.price_lowest > 9999
-		// );
-		console.log(cardInfo[i].id);
-	}
+	console.log(cardInfo);
 };
 const filename = `Sat Jan 06 2024.json`;
 const filePath = path.join("./log", filename);
@@ -71,4 +58,6 @@ const googleL = async () => {
 	uploadFile();
 };
 
-googleL();
+// googleL();
+// reptilePrice();
+main();

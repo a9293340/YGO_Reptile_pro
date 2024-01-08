@@ -156,6 +156,7 @@ export const reptilePrice = async () => {
 		// if (c !== 0) return;
 		if (!(c % 200) && c) await useDelay(1000);
 		const number = cardInfo[c].id;
+		if (!number) continue;
 		let searchName =
 			number.indexOf(" ") === -1
 				? number
@@ -346,7 +347,11 @@ export const reptilePrice = async () => {
 				spinner
 					.error({
 						text: `Card Number : ${chalk.white.bgRed(
-							`${number} no price information!`
+							`${number} no price information! Current progress [${c + 1}/${
+								cardInfo.length
+							}] ${chalk.blue(
+								` ${parseInt(((c + 1) / cardInfo.length) * 1000000) / 10000}% `
+							)} ${totalSpendTime} `
 						)}`,
 					})
 					.clear();

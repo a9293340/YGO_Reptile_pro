@@ -12,10 +12,9 @@ import { google } from "googleapis";
 dotenv.config();
 
 const getRutenInfo = async () => {
+	const token = process.env.LINENOTIFY; // 將此替換為您的 LINE Notify 權杖
+	const url = "https://notify-api.line.me/api/notify";
 	const sendStartLine = async (message) => {
-		const token = process.env.LINENOTIFY; // 將此替換為您的 LINE Notify 權杖
-		const url = "https://notify-api.line.me/api/notify";
-
 		await axios.post(url, `message=${message}`, {
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -36,6 +35,7 @@ const getRutenInfo = async () => {
     <p> total updated ${price.cardInfo.length} data(${now})</a>
   `;
 	} catch (error) {
+		console.log(error);
 		price = null;
 		html = `
     <p>爬蟲錯誤</P>
@@ -45,7 +45,9 @@ const getRutenInfo = async () => {
 
 	const filename = `${new Date().toDateString()}.json`;
 	const filePath = path.join("./log", filename);
-	fs.writeFileSync(filePath, JSON.stringify(price.failedIds));
+	let data = "";
+	if (price.failedIds) data = JSON.stringify(price.failedIds);
+	fs.writeFileSync(filePath, data);
 
 	const sendLineNotification = async (message) => {
 		try {
@@ -104,7 +106,7 @@ const getRutenInfo = async () => {
 					errorMsg === ""
 						? "請至連結確認 https://drive.google.com/drive/u/0/folders/1Ci_nD7E258zv0Cjd8M90I44HEoOFWJcl"
 						: "上傳檔案失敗!"
-				}[${error ? "郵件發送失敗!" : "郵件已發送"}])`
+				})[${error ? "郵件發送失敗!" : "郵件已發送"}]`
 			);
 		});
 	};
@@ -162,7 +164,7 @@ async function scheduleReptilePrice() {
 			whitespaceBreak: true,
 		})
 	);
-	schedule.scheduleJob("scheduleReptilePrice", "01 00 00 * * *", () => {
+	schedule.scheduleJob("scheduleReptilePrice", "01 40 14 * * *", () => {
 		getRutenInfo();
 	});
 }
