@@ -47,7 +47,13 @@ const getRutenInfo = async () => {
 	const filePath = path.join("./log", filename);
 	fs.writeFileSync(filePath, JSON.stringify(price.failedIds));
 
-	const sendLineNotification = (message) => {
+	const sendLineNotification = async (message) => {
+		try {
+			await drive();
+		} catch (error) {
+			errorMsg = error;
+		}
+
 		axios
 			.post(url, `message=${message}`, {
 				headers: {
@@ -68,7 +74,7 @@ const getRutenInfo = async () => {
 			});
 	};
 
-	const sendMail = () => {
+	const sendMail = async () => {
 		const transporter = nodemailer.createTransport({
 			host: "smtp.gmail.com", // SMTP 服务器
 			port: 587, // SMTP 端口
@@ -93,11 +99,13 @@ const getRutenInfo = async () => {
 		};
 
 		transporter.sendMail(mailOptions, async function (error, info) {
-			if (error) {
-				console.log("Error sending email: " + error);
-			} else {
-				sendLineNotification(`${now} - 卡價爬蟲完畢!`);
-			}
+			await sendLineNotification(
+				`${now} - 卡價爬蟲完畢!(${
+					errorMsg === ""
+						? "請至連結確認 https://drive.google.com/drive/u/0/folders/1Ci_nD7E258zv0Cjd8M90I44HEoOFWJcl"
+						: "上傳檔案失敗!"
+				}[${error ? "郵件發送失敗!" : "郵件已發送"}])`
+			);
 		});
 	};
 
@@ -141,7 +149,7 @@ const getRutenInfo = async () => {
 		await uploadFile();
 	};
 
-	sendMail();
+	await sendMail();
 };
 
 async function scheduleReptilePrice() {

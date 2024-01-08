@@ -24,7 +24,8 @@ const main = async () => {
 		console.log(cardInfo[i].id);
 	}
 };
-
+const filename = `Sat Jan 06 2024.json`;
+const filePath = path.join("./log", filename);
 const googleL = async () => {
 	// google drive
 	const CLIENT_ID = process.env.CLIENT_ID;
@@ -52,13 +53,13 @@ const googleL = async () => {
 		try {
 			const res = await drive.files.create({
 				requestBody: {
-					name: "test.json",
+					name: filename,
 					mimeType: "application/json",
 					parents: ["1Ci_nD7E258zv0Cjd8M90I44HEoOFWJcl"],
 				},
 				media: {
 					mimeType: "application/json",
-					body: fs.createReadStream("./package.json"),
+					body: fs.createReadStream(filePath),
 				},
 			});
 			console.log(res.data);
