@@ -5,3 +5,4 @@ yarn.lock
 .env
 pic2
 database
+rules
