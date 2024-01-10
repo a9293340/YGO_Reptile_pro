@@ -4,7 +4,7 @@ import { useReptileTargetUrl } from './api/reptile/index.js';
 import fs from 'fs';
 import MongooseCRUD from './api/MongoDb/Api.js';
 import { useDelay } from './api/tools/index.js';
-
+const now = new Date();
 const containsJapanese = text => {
   const japaneseRegex = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBF]/;
   return japaneseRegex.test(text);
@@ -15,12 +15,14 @@ const removeTN = txt => txt.replaceAll(`\n`, '').replaceAll(`\t`, '');
 const urls = (str, type) =>
   `https://www.db.yugioh-card.com/yugiohdb/card_search.action?ope=1&sess=1&rp=10&mode=&sort=1&keyword=${str}&stype=${type}&ctype=&othercon=2&starfr=&starto=&pscalefr=&pscaleto=&linkmarkerfr=&linkmarkerto=&link_m=2&atkfr=&atkto=&deffr=&defto=&request_locale=ja`;
 
-const getJudRulesLink = async (text, number) => {
+const getJudRulesLink = async (text, number, msg) => {
   // console.log(text);
   const type = containsJapanese(text) ? 1 : 4;
   const tar = containsJapanese(text) ? encodeURIComponent(text) : text;
   const url = urls(tar, type);
-  // console.log(url);
+
+  // origin link
+  await useDelay(200);
   const res = await useReptileTargetUrl(url);
   const body = iconv.decode(Buffer.from(res), 'UTF-8');
   const $ = cheerio.load(body);
@@ -29,23 +31,50 @@ const getJudRulesLink = async (text, number) => {
     return false;
   }
 
-  let newLink =
-    `https://www.db.yugioh-card.com${$('.link_value').attr('value')}`.replace(
-      'card_search.action?ope=2',
-      'faq_search.action?ope=4',
-    ) + '&request_locale=ja';
-  // console.log(newLink);
-
-  const rulePage = await useReptileTargetUrl(newLink);
-  const rBody = iconv.decode(Buffer.from(rulePage), 'UTF-8');
-  const $r = cheerio.load(rBody);
+  const oldLink = `https://www.db.yugioh-card.com${$('.link_value').attr(
+    'value',
+  )}&request_locale=ja`;
+  // console.log(oldLink);
 
   // 補足情報
   let info = {
     number,
+    name_jp_h: '',
+    name_jp_k: '',
+    name_en: '',
+    effect_jp: '',
+    jud_link: '',
     info: '',
     qa: [],
   };
+
+  // old Link
+  await useDelay(300);
+  const oldPage = await useReptileTargetUrl(oldLink);
+  const oBody = iconv.decode(Buffer.from(oldPage), 'UTF-8');
+  const $o = cheerio.load(oBody);
+
+  const card_name = $o('#cardname')
+    .children('h1')
+    .text()
+    .split('\n\t\n\t\t\t')
+    .filter(el => el);
+  // console.log(number, card_name);
+  if (card_name[0]) info.name_jp_h = removeTN(card_name[0]);
+  if (card_name[1]) info.name_jp_k = removeTN(card_name[1]);
+  if (card_name[2]) info.name_en = removeTN(card_name[2]);
+
+  info.effect_jp = removeTN($o('.item_box_text').text().split('\n\t\t\t\t\t\n\t\t\t\t\t')[2]);
+  // console.log(info.effect_jp);
+
+  const newLink = oldLink.replace('card_search.action?ope=2', 'faq_search.action?ope=4');
+  info.jud_link = newLink;
+
+  // new Link
+  await useDelay(200);
+  const rulePage = await useReptileTargetUrl(newLink);
+  const rBody = iconv.decode(Buffer.from(rulePage), 'UTF-8');
+  const $r = cheerio.load(rBody);
 
   info.info = removeTN($r('#supplement').text());
 
@@ -79,6 +108,8 @@ const getJudRulesLink = async (text, number) => {
 
   // find effect
   for (let i = 0; i < links.length; i++) {
+    // qLink
+    await useDelay(300);
     const qLink = links[i];
     const linkPage = await useReptileTargetUrl(qLink);
     const lBody = iconv.decode(Buffer.from(linkPage), 'UTF-8');
@@ -88,14 +119,16 @@ const getJudRulesLink = async (text, number) => {
   }
 
   fs.writeFileSync(`./rules/${number}.json`, JSON.stringify(info));
-  console.log(number, ' done!');
+  console.log(number, ' done!', msg, `(${Math.floor((new Date() - now) / 1000)})`);
   return true;
 };
 
 // getJudRulesLink('EP19-JP067', 4);
 
 const main = async () => {
-  const cards = Object.values(
+  const have = fs.readdirSync('./rules').map(el => el.split('.')[0]);
+  console.log(have[have.length - 1]);
+  let cards = Object.values(
     (await MongooseCRUD('R', 'cards', {}, {}, { id: 1, number: 1, _id: 0 })).reduce(
       (accumulator, card) => {
         // 如果累加器中已經有這個number，則將id添加到對應的ids陣列中
@@ -109,21 +142,25 @@ const main = async () => {
       },
       {},
     ),
-  );
+  )
+    .filter(x => !have.find(y => y === x.number))
+    .filter(y => y.number > have[have.length - 1]);
+  console.log('start', cards.length);
   let err = [];
   for (let i = 0; i < cards.length; i++) {
-    await useDelay(500);
+    // await useDelay(500);
     const card = cards[i];
+    // if (card.number !== '10097168') continue;
     let errorCount = 0;
-    for (let i = 0; i < card.ids.length; i++) {
-      const id = card.ids[i];
-      if (await getJudRulesLink(id, card.number)) break;
+    for (let j = 0; j < card.ids.length; j++) {
+      const id = card.ids[j];
+      if (await getJudRulesLink(id, card.number, `${i + 1}/${cards.length}`)) break;
       else errorCount++;
     }
 
     if (errorCount === card.ids.length) {
       err.push(card.number);
-      console.log(`${card.number} no data`);
+      console.log(`${card.number} no data`, `(${Math.floor((new Date() - now) / 1000)})`);
     }
   }
 
