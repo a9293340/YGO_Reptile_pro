@@ -13,6 +13,13 @@ const containsJapanese = (text) => {
 
 const removeTN = (txt) => txt.replaceAll(`\n`, "").replaceAll(`\t`, "");
 
+const changeReptileTarget = async (delayTime, link) => {
+	await useDelay(delayTime);
+	const res = await useReptileTargetUrl(link);
+	const body = iconv.decode(Buffer.from(res), "UTF-8");
+	return cheerio.load(body);
+};
+
 // 爬蟲RULE主程式
 const reptileRule = async ($, originQa = []) => {
 	let box = [];
@@ -48,16 +55,12 @@ const reptileRule = async ($, originQa = []) => {
 				links.push(link);
 			}
 		});
-	console.log(links);
 	console.log("Get Detail");
 	for (let i = 0; i < links.length; i++) {
 		const link = links[i];
 		console.log(link);
 		// Go to Detail Page
-		await useDelay(350);
-		const res = await useReptileTargetUrl(link);
-		const body = iconv.decode(Buffer.from(res), "UTF-8");
-		const $r = cheerio.load(body);
+		const $r = await changeReptileTarget(350, link);
 
 		box[i].q = removeTN($r("#question_text").text());
 		box[i].a = removeTN($r("#answer_text").text());
@@ -68,10 +71,7 @@ const reptileRule = async ($, originQa = []) => {
 // 第一次爬蟲(沒有QA時)
 const firstReptile = async (page, pageLink, link) => {
 	// 查看最後page
-	await useDelay(200);
-	const lastPageUrl = await useReptileTargetUrl(pageLink);
-	const pBody = iconv.decode(Buffer.from(lastPageUrl), "UTF-8");
-	const $p = cheerio.load(pBody);
+	const $p = await changeReptileTarget(200, pageLink);
 
 	// 第一次爬蟲
 	const hasLastPageOver10 = $p(".t_body").children().length >= 10;
@@ -83,10 +83,7 @@ const firstReptile = async (page, pageLink, link) => {
 	if (!hasLastPageOver10 && page > 1) {
 		console.log("Reptile Another");
 		const newLink = link + `&page=${page - 1}`;
-		await useDelay(200);
-		const lastPageUrl = await useReptileTargetUrl(newLink);
-		const pBody = iconv.decode(Buffer.from(lastPageUrl), "UTF-8");
-		const $p = cheerio.load(pBody);
+		const $p = await changeReptileTarget(200, newLink);
 
 		qa = [...(await reptileRule($p)), ...qa];
 	}
@@ -94,14 +91,10 @@ const firstReptile = async (page, pageLink, link) => {
 };
 
 // update rules
-const rulesUpdate = async (page, pageLink, link, originQa) => {
+const rulesUpdate = async (pageLink, originQa) => {
 	console.log("!!!!!!!", originQa);
 	// 查看最後page
-	await useDelay(200);
-	const lastPageUrl = await useReptileTargetUrl(pageLink);
-	const pBody = iconv.decode(Buffer.from(lastPageUrl), "UTF-8");
-	const $p = cheerio.load(pBody);
-
+	const $p = await changeReptileTarget(200, pageLink);
 	const qa = await reptileRule($p, originQa);
 
 	return [...originQa, ...qa].sort((a, b) => b.date.localeCompare(a.date));
@@ -112,10 +105,7 @@ const getRulesAndInfo = async (file, jud) => {
 	const link = file.jud_link + "&sort=2";
 	// console.log(link);
 	// rules page 1
-	await useDelay(200);
-	const res = await useReptileTargetUrl(link);
-	const body = iconv.decode(Buffer.from(res), "UTF-8");
-	const $ = cheerio.load(body);
+	const $ = await changeReptileTarget(200, link);
 
 	// Get Info
 	file.info = removeTN($("#supplement").text());
@@ -134,7 +124,7 @@ const getRulesAndInfo = async (file, jud) => {
 	// 第一次爬蟲
 	if (!jud) file.qa = await firstReptile(page, pageLink, link);
 	// 補新資料
-	else file.qa = await rulesUpdate(page, pageLink, link, file.qa);
+	else file.qa = await rulesUpdate(pageLink, file.qa);
 
 	return file;
 };
@@ -149,10 +139,7 @@ const getCardJpInfo = async (text, number) => {
 	const url = urls(tar, type);
 
 	// origin link
-	await useDelay(200);
-	const res = await useReptileTargetUrl(url);
-	const body = iconv.decode(Buffer.from(res), "UTF-8");
-	const $ = cheerio.load(body);
+	const $ = await changeReptileTarget(200, url);
 
 	if (!$(".link_value").attr("value")) {
 		return false;
@@ -174,10 +161,7 @@ const getCardJpInfo = async (text, number) => {
 	};
 
 	// old Link
-	await useDelay(300);
-	const oldPage = await useReptileTargetUrl(oldLink);
-	const oBody = iconv.decode(Buffer.from(oldPage), "UTF-8");
-	const $o = cheerio.load(oBody);
+	const $o = await changeReptileTarget(300, oldLink);
 
 	const card_name = $o("#cardname")
 		.children("h1")
