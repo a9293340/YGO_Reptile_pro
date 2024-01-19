@@ -1,9 +1,9 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const jurisprudence = new mongoose.Schema({
 	number: { type: String, required: true, unique: true, index: true },
-	name_jp_h: { type: String, required: true },
-	name_jp_k: { type: String, required: true },
+	name_jp_h: { type: String },
+	name_jp_k: { type: String },
 	name_en: { type: String },
 	effect_jp: { type: String, required: true },
 	jud_link: { type: String, required: true },
@@ -27,12 +27,12 @@ const admin = new mongoose.Schema({
 	status: { type: Number, required: true },
 	account: { type: String, unique: true, index: true, required: true },
 	password: { type: String, required: true },
-	email: { type: String, unique: true, required: true },
+	email: { type: String, unique: true, required: true, index: true },
 });
 
 const series_introduction = new mongoose.Schema({
 	type: { type: Number, required: true },
-	title: { type: String, required: true },
+	title: { type: String, required: true, index: true },
 	publish_date: { type: Date, required: true, default: Date.now },
 	photo: { type: String },
 	content: { type: String },
@@ -44,7 +44,7 @@ const series_introduction = new mongoose.Schema({
 
 const useful_card_introduction = new mongoose.Schema({
 	type: { type: Number, required: true },
-	title: { type: String, required: true },
+	title: { type: String, required: true, index: true },
 	publish_date: { type: Date, required: true, default: Date.now },
 	photo: { type: String },
 	content: { type: String },
@@ -55,7 +55,7 @@ const useful_card_introduction = new mongoose.Schema({
 });
 
 const meta_deck = new mongoose.Schema({
-	title: { type: String, required: true },
+	title: { type: String, required: true, index: true },
 	publish_date: { type: Date, required: true, default: Date.now },
 	photo: { type: String },
 	content: { type: String },
@@ -67,7 +67,7 @@ const meta_deck = new mongoose.Schema({
 
 const product_information = new mongoose.Schema({
 	type: { type: Number, required: true },
-	title: { type: String, required: true },
+	title: { type: String, required: true, index: true },
 	publish_date: { type: Date, required: true, default: Date.now },
 	photo: { type: String },
 	content: { type: String },
@@ -79,7 +79,7 @@ const product_information = new mongoose.Schema({
 
 const rules = new mongoose.Schema({
 	type: { type: Number, required: true },
-	title: { type: String, required: true },
+	title: { type: String, required: true, index: true },
 	publish_date: { type: Date, required: true, default: Date.now },
 	photo: { type: String },
 	content: { type: String },
@@ -90,7 +90,7 @@ const rules = new mongoose.Schema({
 });
 
 const series_story = new mongoose.Schema({
-	title: { type: String, required: true },
+	title: { type: String, required: true, index: true },
 	publish_date: { type: Date, required: true, default: Date.now },
 	photo: { type: String },
 	content: { type: String },
@@ -102,7 +102,7 @@ const series_story = new mongoose.Schema({
 
 const battle_paper = new mongoose.Schema({
 	type: { type: Number, required: true },
-	title: { type: String, required: true },
+	title: { type: String, required: true, index: true },
 	publish_date: { type: Date, required: true, default: Date.now },
 	photo: { type: String },
 	content: { type: String },
@@ -140,7 +140,7 @@ const cards = new mongoose.Schema({
 			price_avg: { type: Number, default: null },
 		},
 	],
-	id: { type: String, required: true, unique: true, index: true },
+	id: { type: String, required: true, index: true },
 });
 
 const cards_image = new mongoose.Schema({
@@ -175,7 +175,7 @@ const decks = new mongoose.Schema({
 
 const calendar = new mongoose.Schema({
 	title: { type: String, required: true, index: true },
-	date: { type: Date, required: true },
+	date: { type: Date, required: true, index: true },
 	url: { type: String },
 	type: { type: Number, required: true },
 	content: { type: String },
@@ -194,11 +194,11 @@ const product_information_type = new mongoose.Schema({
 	packType: { type: String, required: true, index: true, unique: true },
 	mainType: { type: Number, required: true },
 	status: { type: Number, required: true },
-	name: { type: String, required: true, index: true, unique: true },
+	name: { type: String, required: true, index: true },
 });
 
 const tag = new mongoose.Schema({
-	tag: { type: String, required: true, unique: true },
+	tag: { type: String, required: true, unique: true, index: true },
 });
 
 const frontend_token = new mongoose.Schema({
@@ -219,7 +219,7 @@ const permission = new mongoose.Schema({
 	type: { type: Number, required: true },
 });
 
-export default {
+module.exports = {
 	admin,
 	series_introduction,
 	useful_card_introduction,
