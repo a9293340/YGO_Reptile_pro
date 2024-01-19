@@ -13,7 +13,7 @@ import dotenv from "dotenv";
 dotenv.config();
 const uri = `mongodb+srv://${process.env.ADMIN}:${process.env.PASSWORD}@cluster0.rnvhhr4.mongodb.net/${process.env.DB}?retryWrites=true&w=majority`;
 let db;
-export const MongooseCRUD = (
+const MongooseCRUD = (
 	type,
 	modelName,
 	filters,
@@ -70,3 +70,5 @@ export const MongooseCRUD = (
 
 	return promise;
 };
+
+export default MongooseCRUD;

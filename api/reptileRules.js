@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import iconv from "iconv-lite";
 import fs from "fs";
 import { useReptileTargetUrl } from "./reptile/index.js";
-import { MongooseCRUD } from "./MongoDb/Api.js";
+import MongooseCRUD from "./MongoDb/Api.js";
 import { useDelay } from "./tools/index.js";
 
 const containsJapanese = (text) => {
