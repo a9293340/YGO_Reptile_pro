@@ -219,6 +219,11 @@ const permission = new mongoose.Schema({
   type: { type: Number, required: true },
 });
 
+const forbidden_card_list = new mongoose.Schema({
+  number: { type: String, required: true },
+  type: { type: Number },
+});
+
 export default {
   admin,
   series_introduction,
@@ -239,4 +244,5 @@ export default {
   cards_image,
   permission,
   jurisprudence,
+  forbidden_card_list,
 };
