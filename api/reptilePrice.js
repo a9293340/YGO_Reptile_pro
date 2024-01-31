@@ -196,6 +196,8 @@ export const reptilePrice = async () => {
             .filter(el => el.ProdName.indexOf('同人') === -1)
             .filter(el => el.ProdName.indexOf('DIY') === -1)
             // 非福袋 雜項
+            .filter(el => el.ProdName.indexOf('防雷') === -1)
+            .filter(el => el.ProdName.indexOf('請勿下標') === -1)
             .filter(el => el.ProdName.indexOf('福袋') === -1)
             .filter(el => el.ProdName.indexOf('卡磚') === -1)
             .filter(el => el.ProdName.indexOf('壓克力') === -1)
@@ -259,29 +261,29 @@ export const reptilePrice = async () => {
       )[0];
 
       // 檢查異常值
-      if (tar.price_info.length >= 3) {
-        for (let i = 0; i < rarity.length; i++) {
-          const rar = rarity[i];
-          let prices = allPrice.filter(el => el.rarity === rar)[0];
-          if (!prices) continue;
-          const tar_prices = tar.price_info.filter(el => el.rarity === rar);
-          const avg_low = Math.floor(
-            tar_prices
-              .filter(el => el.price_lowest !== '-')
-              .reduce((a, b) => a + b.price_lowest, 0) / tar_prices.length,
-          );
-          const avg_avg = Math.floor(
-            tar_prices.filter(el => el.price_avg !== '-').reduce((a, b) => a + b.price_avg, 0) /
-              tar_prices.length,
-          );
-          if (avg_low * 1.7 <= prices.price_lowest || avg_low * 0.35 >= prices.price_lowest) {
-            allPrice[allPrice.findIndex(x => x.rarity === rar)].price_lowest = '-';
-          }
-          if (avg_avg * 1.7 <= prices.price_avg || avg_avg * 0.35 >= prices.price_avg) {
-            allPrice[allPrice.findIndex(x => x.rarity === rar)].price_avg = '-';
-          }
-        }
-      }
+      // if (tar.price_info.length >= 3) {
+      //   for (let i = 0; i < rarity.length; i++) {
+      //     const rar = rarity[i];
+      //     let prices = allPrice.filter(el => el.rarity === rar)[0];
+      //     if (!prices) continue;
+      //     const tar_prices = tar.price_info.filter(el => el.rarity === rar);
+      //     const avg_low = Math.floor(
+      //       tar_prices
+      //         .filter(el => el.price_lowest !== '-')
+      //         .reduce((a, b) => a + b.price_lowest, 0) / tar_prices.length,
+      //     );
+      //     const avg_avg = Math.floor(
+      //       tar_prices.filter(el => el.price_avg !== '-').reduce((a, b) => a + b.price_avg, 0) /
+      //         tar_prices.length,
+      //     );
+      //     if (avg_low * 1.7 <= prices.price_lowest || avg_low * 0.35 >= prices.price_lowest) {
+      //       allPrice[allPrice.findIndex(x => x.rarity === rar)].price_lowest = '-';
+      //     }
+      //     if (avg_avg * 1.7 <= prices.price_avg || avg_avg * 0.35 >= prices.price_avg) {
+      //       allPrice[allPrice.findIndex(x => x.rarity === rar)].price_avg = '-';
+      //     }
+      //   }
+      // }
       // console.log(allPrice);
       // return;
       tar.price_info = [...tar.price_info, ...allPrice];
