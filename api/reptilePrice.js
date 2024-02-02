@@ -141,10 +141,10 @@ export const reptilePrice = async () => {
 		"R",
 		"cards",
 		{
-			// "price_info.time": {
-			// 	$not: new RegExp(dayjs().format("YYYY-MM-DD")),
-			// },
-			id: "PAC1-JP004",
+			"price_info.time": {
+				$not: new RegExp(dayjs().format("YYYY-MM-DD")),
+			},
+			// id: "PAC1-JP004",
 		},
 		{},
 		{ id: 1, rarity: 1, _id: 0, number: 1 }
@@ -216,6 +216,8 @@ export const reptilePrice = async () => {
 						.filter((el) => el.ProdName.indexOf("同人") === -1)
 						.filter((el) => el.ProdName.indexOf("DIY") === -1)
 						// 非福袋 雜項
+						.filter((el) => !/搜(?=[a-zA-Z])/.test(el.ProdName))
+						.filter((el) => el.ProdName.indexOf("搜:") === -1)
 						.filter((el) => el.ProdName.indexOf("防雷") === -1)
 						.filter((el) => el.ProdName.indexOf("請勿下標") === -1)
 						.filter((el) => el.ProdName.indexOf("福袋") === -1)
