@@ -135,9 +135,10 @@ export const reptilePrice = async () => {
       'price_info.time': {
         $not: new RegExp(dayjs().format('YYYY-MM-DD')),
       },
+      // id: "PAC1-JP004",
     },
     {},
-    { id: 1, rarity: 1, _id: 0 },
+    { id: 1, rarity: 1, _id: 0, number: 1 },
   );
   let errorBox = [];
   let failedIds = [];
@@ -196,6 +197,8 @@ export const reptilePrice = async () => {
             .filter(el => el.ProdName.indexOf('同人') === -1)
             .filter(el => el.ProdName.indexOf('DIY') === -1)
             // 非福袋 雜項
+            .filter(el => !/搜(?=[a-zA-Z])/.test(el.ProdName))
+            .filter(el => el.ProdName.indexOf('搜:') === -1)
             .filter(el => el.ProdName.indexOf('防雷') === -1)
             .filter(el => el.ProdName.indexOf('請勿下標') === -1)
             .filter(el => el.ProdName.indexOf('福袋') === -1)
@@ -258,8 +261,14 @@ export const reptilePrice = async () => {
 
       // Mongodb
       let tar = (
-        await MongooseCRUD('R', 'cards', { id: cardInfo[c].id }, { price_info: 1, id: 1 })
+        await MongooseCRUD(
+          'R',
+          'cards',
+          { id: cardInfo[c].id, number: cardInfo[c].number },
+          { price_info: 1, id: 1 },
+        )
       )[0];
+
       // 檢查異常值
       // if (tar.price_info.length >= 3) {
       //   for (let i = 0; i < rarity.length; i++) {
@@ -285,12 +294,17 @@ export const reptilePrice = async () => {
       //   }
       // }
       // console.log(allPrice);
-      return;
+      // return;
       tar.price_info = [...tar.price_info, ...allPrice];
       let upload = true;
       if (allPrice.length > 0) {
         try {
-          await MongooseCRUD('Uo', 'cards', { id: cardInfo[c].id }, { price_info: tar.price_info });
+          await MongooseCRUD(
+            'Uo',
+            'cards',
+            { id: cardInfo[c].id, number: cardInfo[c].number },
+            { price_info: tar.price_info },
+          );
         } catch (error) {
           upload = false;
         }
