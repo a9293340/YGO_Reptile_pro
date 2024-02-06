@@ -204,11 +204,12 @@ export const reptilePrice = async () => {
             .filter(el => el.ProdName.indexOf('單螺絲卡夾') === -1)
             .filter(el => el.ProdName.indexOf('全新未拆') === -1)
             .filter(el => el.ProdName.indexOf('參考') === -1)
+            .filter(el => el.ProdName.indexOf('非 ') === -1)
+            .filter(el => !/非(?=[A-Za-z\s])/.test(el.ProdName))
             // 非搜尋
             // .filter(el => el.ProdName.indexOf('搜') === -1)
             // 非未拆包
             .filter(el => el.ProdName.indexOf('未拆包') === -1);
-
           if (number.indexOf(' ') === -1)
             prices = prices.filter(el => el.ProdName.indexOf(number) !== -1);
           // console.log(prices);
@@ -216,11 +217,11 @@ export const reptilePrice = async () => {
             // 稀有度相同
             prices = prices.filter(el => checkWordsFunction(el.ProdName, rar));
           // console.log(prices);
+          prices = prices.filter(el => el.PriceRange[0] === el.PriceRange[1]);
           prices = prices
             .map(el => el.PriceRange[1])
             .filter(el => Number.isInteger(el))
             .filter(el => el < 100000);
-          // console.log(prices);
           prices = prices.filter(el => el !== 9999 && el !== 99999);
           try {
             const { minPrice, averagePrice } = calculatePrices(prices);
@@ -259,7 +260,6 @@ export const reptilePrice = async () => {
       let tar = (
         await MongooseCRUD('R', 'cards', { id: cardInfo[c].id }, { price_info: 1, id: 1 })
       )[0];
-
       // 檢查異常值
       // if (tar.price_info.length >= 3) {
       //   for (let i = 0; i < rarity.length; i++) {
@@ -285,7 +285,7 @@ export const reptilePrice = async () => {
       //   }
       // }
       // console.log(allPrice);
-      // return;
+      return;
       tar.price_info = [...tar.price_info, ...allPrice];
       let upload = true;
       if (allPrice.length > 0) {
